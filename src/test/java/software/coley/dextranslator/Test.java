@@ -197,18 +197,11 @@ public class Test {
 
 		private final DexCode code;
 		private final DexItemFactory factory;
-		private IRBuilder irBuilder;
 
 		HackyDexSourceCode(DexCode code, ProgramMethod method, DexMethod originalMethod, Position callerPosition, DexItemFactory factory) {
 			super(code, method, originalMethod, callerPosition, factory);
 			this.code = code;
 			this.factory = factory;
-		}
-
-		@Override
-		public void buildPrelude(IRBuilder builder) {
-			irBuilder = builder;
-			super.buildPrelude(builder);
 		}
 
 		@Override
@@ -292,7 +285,7 @@ public class Test {
 			int width = arrayFilledDataPayloadResolver.getElementWidth(payloadOffset);
 			long size = arrayFilledDataPayloadResolver.getSize(payloadOffset);
 			short[] data = arrayFilledDataPayloadResolver.getData(payloadOffset);
-			Value src = irBuilder.readRegister(arrayRef, ValueTypeConstraint.OBJECT);
+			Value src = builder.readRegister(arrayRef, ValueTypeConstraint.OBJECT);
 			MemberType type = MemberType.valueOf(src.getType().asArrayType().getMemberType().toString());
 			NewArrayFilledData instruction = new NewArrayFilledData(src, width, size, data) {
 
@@ -349,7 +342,7 @@ public class Test {
 				}
 			};
 			try {
-				ADD_INSTRUCTION.invokeExact(irBuilder, (Instruction) instruction);
+				ADD_INSTRUCTION.invokeExact(builder, (Instruction) instruction);
 			} catch (Throwable t) {
 				throw new RuntimeException(t);
 			}
