@@ -8,7 +8,6 @@ import com.android.tools.r8.cf.code.CfArrayStore;
 import com.android.tools.r8.cf.code.CfConstNumber;
 import com.android.tools.r8.cf.code.CfNewArray;
 import com.android.tools.r8.cf.code.CfStackInstruction;
-import com.android.tools.r8.cf.code.CfStore;
 import com.android.tools.r8.dex.ApplicationReader;
 import com.android.tools.r8.dex.ApplicationWriter;
 import com.android.tools.r8.dex.Marker;
@@ -61,8 +60,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
-import java.nio.ByteBuffer;
-import java.nio.ShortBuffer;
+import java.nio.ByteOrder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -75,6 +73,7 @@ import java.util.concurrent.TimeUnit;
 public class Test {
 	private static final Timing EMPTY_TIMING = Timing.empty();
 	private static final ExecutorService THREAD_POOL = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() - 1);
+	private static final boolean LITTLE_ENDIAN = ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN;
 
 	public static void main(String[] args) throws Exception {
 		Path path = Paths.get(Test.class.getResource("/classes2.dex").toURI());
@@ -329,7 +328,7 @@ public class Test {
 								builder.add(
 										new CfStackInstruction(CfStackInstruction.Opcode.Dup),
 										new CfConstNumber(i, ValueType.INT),
-										new CfConstNumber(UNSAFE.getShort(arrayData, Unsafe.ARRAY_SHORT_BASE_OFFSET + i * 2L), ValueType.INT),
+										new CfConstNumber(reverseShort(UNSAFE.getShort(arrayData, Unsafe.ARRAY_SHORT_BASE_OFFSET + i * 2L)), ValueType.INT),
 										new CfArrayStore(type)
 								);
 							}
@@ -339,7 +338,7 @@ public class Test {
 								builder.add(
 										new CfStackInstruction(CfStackInstruction.Opcode.Dup),
 										new CfConstNumber(i, ValueType.INT),
-										new CfConstNumber(UNSAFE.getInt(arrayData, Unsafe.ARRAY_SHORT_BASE_OFFSET + i * 4L), ValueType.INT),
+										new CfConstNumber(reverseInt(UNSAFE.getInt(arrayData, Unsafe.ARRAY_SHORT_BASE_OFFSET + i * 4L)), ValueType.INT),
 										new CfArrayStore(type)
 								);
 							}
@@ -349,7 +348,7 @@ public class Test {
 								builder.add(
 										new CfStackInstruction(CfStackInstruction.Opcode.Dup),
 										new CfConstNumber(i, ValueType.INT),
-										new CfConstNumber(UNSAFE.getInt(arrayData, Unsafe.ARRAY_SHORT_BASE_OFFSET + i * 8L), ValueType.INT),
+										new CfConstNumber(reverseLong(UNSAFE.getLong(arrayData, Unsafe.ARRAY_SHORT_BASE_OFFSET + i * 8L)), ValueType.LONG),
 										new CfArrayStore(type)
 								);
 							}
@@ -393,5 +392,20 @@ public class Test {
 			}
 		}
 		throw new IllegalStateException("Not implemented");
+	}
+
+	static short reverseShort(short s) {
+		if (LITTLE_ENDIAN) return Short.reverseBytes(s);
+		return s;
+	}
+
+	static int reverseInt(int i) {
+		if (LITTLE_ENDIAN) return Integer.reverseBytes(i);
+		return i;
+	}
+
+	static long reverseLong(long l) {
+		if (LITTLE_ENDIAN) return Long.reverseBytes(l);
+		return l;
 	}
 }
