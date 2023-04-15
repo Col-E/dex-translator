@@ -247,6 +247,7 @@ public class Test {
 					@Override
 					public void insertLoadAndStores(InstructionListIterator it, LoadStoreHelper helper) {
 						helper.loadInValues(this, it);
+						helper.storeOutValue(this, it);
 					}
 
 					@Override
