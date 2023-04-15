@@ -26,7 +26,6 @@ import com.android.tools.r8.graph.DexProgramClass;
 import com.android.tools.r8.graph.DexType;
 import com.android.tools.r8.graph.LazyLoadedDexApplication;
 import com.android.tools.r8.graph.ProgramMethod;
-import com.android.tools.r8.graph.ThrowNullCode;
 import com.android.tools.r8.graph.bytecodemetadata.BytecodeMetadataProvider;
 import com.android.tools.r8.ir.code.IRCode;
 import com.android.tools.r8.ir.code.Instruction;
@@ -115,20 +114,12 @@ public class Test {
 			for (DexEncodedMethod method : dexClass.methods()) {
 				Code code = method.getCode();
 				if (code instanceof DexCode dexCode) {
-					try {
-						ProgramMethod programMethod = method.asProgramMethod(dexClass);
-						IRCode irCode = buildIR(dexCode, programMethod, appView, Origin.root());
+					ProgramMethod programMethod = method.asProgramMethod(dexClass);
+					IRCode irCode = buildIR(dexCode, programMethod, appView, Origin.root());
 
-						CfBuilder builder = new CfBuilder(appView, programMethod, irCode, BytecodeMetadataProvider.empty());
-						CfCode cfCode = builder.build(deadCodeRemover, EMPTY_TIMING);
-						method.setCode(cfCode, EMPTY);
-					} catch (Throwable ex) {
-						System.err.println(" >>>>>>>>>>>> " + dexClass.getTypeName() + " . " + method.getName() + method.descriptor());
-						ex.printStackTrace();
-
-						// TODO: There are some edge cases with arrays, but most stuff works great
-						method.setCode(ThrowNullCode.get(), EMPTY);
-					}
+					CfBuilder builder = new CfBuilder(appView, programMethod, irCode, BytecodeMetadataProvider.empty());
+					CfCode cfCode = builder.build(deadCodeRemover, EMPTY_TIMING);
+					method.setCode(cfCode, EMPTY);
 				}
 			}
 		});
