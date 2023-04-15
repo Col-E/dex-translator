@@ -61,6 +61,8 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
+import java.nio.ByteBuffer;
+import java.nio.ShortBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -300,27 +302,59 @@ public class Test {
 			long size = arrayFilledDataPayloadResolver.getSize(payloadOffset);
 			short[] data = arrayFilledDataPayloadResolver.getData(payloadOffset);
 			Value src = irBuilder.readRegister(arrayRef, ValueTypeConstraint.OBJECT);
-			DexType type = switch (width) {
-				case 1 -> factory.byteArrayType;
-				case 2 -> factory.shortArrayType;
-				case 4 -> factory.intArrayType;
-				case 8 -> factory.longArrayType;
-				default -> throw new IllegalStateException("Unknown width " + width);
-			};
+			MemberType type = MemberType.valueOf(src.getType().asArrayType().getMemberType().toString());
 			NewArrayFilledData instruction = new NewArrayFilledData(src, width, size, data) {
 
 				@Override
 				public void insertLoadAndStores(InstructionListIterator it, LoadStoreHelper helper) {
+					helper.loadInValues(this, it);
 				}
 
 				@Override
 				public void buildCf(CfBuilder builder) {
-					builder.add(
-							new CfConstNumber(size, ValueType.INT),
-							new CfNewArray(type),
-							new CfStore(ValueType.fromDexType(type), arrayRef)
-					);
-					// TODO: need to read from data to fill in the array!
+					short[] arrayData = data;
+					switch (element_width) {
+						case 1 -> {
+							for (int i = 0; i < size; i++) {
+								builder.add(
+										new CfStackInstruction(CfStackInstruction.Opcode.Dup),
+										new CfConstNumber(i, ValueType.INT),
+										new CfConstNumber(UNSAFE.getByte(arrayData, Unsafe.ARRAY_SHORT_BASE_OFFSET + i), ValueType.INT),
+										new CfArrayStore(type)
+								);
+							}
+						}
+						case 2 -> {
+							for (int i = 0; i < size; i++) {
+								builder.add(
+										new CfStackInstruction(CfStackInstruction.Opcode.Dup),
+										new CfConstNumber(i, ValueType.INT),
+										new CfConstNumber(UNSAFE.getShort(arrayData, Unsafe.ARRAY_SHORT_BASE_OFFSET + i * 2L), ValueType.INT),
+										new CfArrayStore(type)
+								);
+							}
+						}
+						case 4 -> {
+							for (int i = 0; i < size; i++) {
+								builder.add(
+										new CfStackInstruction(CfStackInstruction.Opcode.Dup),
+										new CfConstNumber(i, ValueType.INT),
+										new CfConstNumber(UNSAFE.getInt(arrayData, Unsafe.ARRAY_SHORT_BASE_OFFSET + i * 4L), ValueType.INT),
+										new CfArrayStore(type)
+								);
+							}
+						}
+						case 8 -> {
+							for (int i = 0; i < size; i++) {
+								builder.add(
+										new CfStackInstruction(CfStackInstruction.Opcode.Dup),
+										new CfConstNumber(i, ValueType.INT),
+										new CfConstNumber(UNSAFE.getInt(arrayData, Unsafe.ARRAY_SHORT_BASE_OFFSET + i * 8L), ValueType.INT),
+										new CfArrayStore(type)
+								);
+							}
+						}
+					}
 				}
 			};
 			try {
