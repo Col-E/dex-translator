@@ -5,6 +5,7 @@ import software.coley.dextranslator.Options;
 
 import javax.annotation.Nonnull;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
@@ -35,14 +36,16 @@ public abstract class AbstractTask<T> {
 	@Nonnull
 	public CompletableFuture<T> start() {
 		CompletableFuture<T> future = new CompletableFuture<>();
-		Executors.newSingleThreadExecutor().submit(() -> run(future));
+		ExecutorService service = Executors.newSingleThreadExecutor();
+		service.submit(() -> run(future));
+		service.shutdown();
 		return future;
 	}
 
 	protected abstract boolean run(@Nonnull CompletableFuture<T> future);
 
-	protected static boolean fail(@Nonnull Exception ex,
-								  @Nonnull CompletableFuture<?> future) {
+	protected boolean fail(@Nonnull Exception ex,
+						   @Nonnull CompletableFuture<?> future) {
 		return future.completeExceptionally(ex);
 	}
 }

@@ -167,4 +167,10 @@ public class ConverterTask extends AbstractTask<ConverterResult> {
 		// Done
 		return future.complete(new ConverterResult(invalidMethods));
 	}
+
+	@Override
+	protected boolean fail(@Nonnull Exception ex, @Nonnull CompletableFuture<?> future) {
+		threadPool.shutdownNow();
+		return super.fail(ex, future);
+	}
 }
