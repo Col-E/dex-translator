@@ -133,6 +133,22 @@ public class Options {
 	}
 
 	/**
+	 * @return {@code true} when the output is for DEX types.
+	 */
+	public boolean isDexOutput() {
+		return options.isGeneratingDex() || options.isGeneratingDexIndexed() || options.isGeneratingDexFilePerClassFile();
+	}
+
+	/**
+	 * @return Flag to replace invalid method bodies.
+	 *
+	 * @see #setReplaceInvalidMethodBodies(boolean)
+	 */
+	public boolean isReplaceInvalidMethodBodies() {
+		return replaceInvalidMethodBodies;
+	}
+
+	/**
 	 * @return Synthetic item strategy based on the target output type.
 	 */
 	@Nonnull
@@ -146,16 +162,8 @@ public class Options {
 	 * @return Internal options for D8/R8.
 	 */
 	@Nonnull
-	public InternalOptions getOptions() {
+	public InternalOptions getInternalOptions() {
 		return options;
 	}
 
-	/**
-	 * @return Flag to replace invalid method bodies.
-	 *
-	 * @see #setReplaceInvalidMethodBodies(boolean)
-	 */
-	public boolean isReplaceInvalidMethodBodies() {
-		return replaceInvalidMethodBodies;
-	}
 }

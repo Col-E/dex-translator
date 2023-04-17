@@ -10,22 +10,22 @@ import software.coley.dextranslator.task.Converter;
 import java.io.File;
 
 /**
- * Command to convert one or more DEX files to a JAR file.
+ * Command to convert one or more JAR files to an APK file.
  *
  * @author Matt Coley
  */
 @SuppressWarnings("unused")
-@Command(name = "d2j",
-		description = "one or more DEX files to a JAR file")
-public class Dex2Jar extends AbstractConversionCommand {
+@Command(name = "j2apk",
+		description = "one or more JAR files to an APK file")
+public class Jar2Apk extends AbstractConversionCommand {
 	@Parameters(index = "0",
-			description = "Path to one or more DEX files.",
+			description = "Path to one or more JAR files.",
 			arity = "1..*")
 	private File[] inputFiles;
 
 	@Option(names = {"-o", "--out"},
-			description = "Path to JAR file to write to.",
-			defaultValue = "out-d2j.jar",
+			description = "Path to APK file to write to.",
+			defaultValue = "output.apk",
 			required = true)
 	private File outputFile;
 
@@ -40,15 +40,15 @@ public class Dex2Jar extends AbstractConversionCommand {
 	private boolean replaceInvalid;
 
 	@Override
-	public Void call() throws Exception {
+	public Void call() {
 		Inputs inputs = new Inputs();
 		for (File inputFile : inputFiles)
-			inputs.addDex(inputFile.toPath());
+			inputs.addJarArchive(inputFile.toPath());
 
 		Options options = new Options()
 				.setReplaceInvalidMethodBodies(replaceInvalid)
 				.setLenient(lenient)
-				.setJvmArchiveOutput(outputFile.toPath(), true);
+				.setDexFileOutput(outputFile.toPath());
 
 		new Converter()
 				.setInputs(inputs)

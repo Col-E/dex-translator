@@ -36,7 +36,7 @@ public class LoaderTask extends AbstractTask<ApplicationData> {
 	protected boolean run(@Nonnull CompletableFuture<ApplicationData> future) {
 		// Create input model
 		AndroidApp inputApplication = inputs.populate(AndroidApp.builder()).build();
-		ApplicationReader applicationReader = new ApplicationReader(inputApplication, options.getOptions(), EMPTY_TIMING);
+		ApplicationReader applicationReader = new ApplicationReader(inputApplication, options.getInternalOptions(), EMPTY_TIMING);
 		LazyLoadedDexApplication application;
 		try {
 			application = applicationReader.read();
