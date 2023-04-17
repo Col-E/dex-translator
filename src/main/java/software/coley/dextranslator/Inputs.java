@@ -27,9 +27,11 @@ public class Inputs {
 	/**
 	 * @param archivePath
 	 * 		Path to an AAR archive file to add as an input.
+	 *
+	 * @return Self
 	 */
-	public void addAarArchive(@Nonnull Path archivePath) {
-		addResource(new Input(
+	public Inputs addAarArchive(@Nonnull Path archivePath) {
+		return addResource(new Input(
 				new PathOrigin(archivePath),
 				(origin, builder) -> builder.addProgramResourceProvider(AarArchiveResourceProvider.fromArchive(archivePath)))
 		);
@@ -38,9 +40,11 @@ public class Inputs {
 	/**
 	 * @param archivePath
 	 * 		Path to a JAR archive file to add as an input.
+	 *
+	 * @return Self
 	 */
-	public void addJarArchive(@Nonnull Path archivePath) {
-		addResource(new Input(
+	public Inputs addJarArchive(@Nonnull Path archivePath) {
+		return addResource(new Input(
 				new PathOrigin(archivePath),
 				(origin, builder) -> builder.addProgramResourceProvider(ArchiveResourceProvider.fromArchive(archivePath, true)))
 		);
@@ -49,9 +53,11 @@ public class Inputs {
 	/**
 	 * @param provider
 	 * 		Generic provider to supply classes and file resources.
+	 *
+	 * @return Self
 	 */
-	public void addProgramProvider(@Nonnull ProgramResourceProvider provider) {
-		addResource(new Input(
+	public Inputs addProgramProvider(@Nonnull ProgramResourceProvider provider) {
+		return addResource(new Input(
 				(origin, builder) -> builder.addProgramResourceProvider(provider))
 		);
 	}
@@ -60,12 +66,14 @@ public class Inputs {
 	 * @param classFilePath
 	 * 		Path to class file to add as an input.
 	 *
+	 * @return Self
+	 *
 	 * @throws IOException
 	 * 		When the path cannot be read from.
 	 */
-	public void addJvmClass(@Nonnull Path classFilePath) throws IOException {
+	public Inputs addJvmClass(@Nonnull Path classFilePath) throws IOException {
 		byte[] classBytes = Files.readAllBytes(classFilePath);
-		addResource(new Input(
+		return addResource(new Input(
 				new PathOrigin(classFilePath),
 				(origin, builder) -> builder.addClassProgramData(classBytes, origin))
 		);
@@ -74,21 +82,25 @@ public class Inputs {
 	/**
 	 * @param classBytes
 	 * 		Class file to add as an input.
+	 *
+	 * @return Self
 	 */
-	public void addJvmClass(@Nonnull byte[] classBytes) {
-		addResource(new Input((origin, builder) -> builder.addClassProgramData(classBytes, origin)));
+	public Inputs addJvmClass(@Nonnull byte[] classBytes) {
+		return addResource(new Input((origin, builder) -> builder.addClassProgramData(classBytes, origin)));
 	}
 
 	/**
 	 * @param dexFilePath
 	 * 		Path to dex file to add as an input.
 	 *
+	 * @return Self
+	 *
 	 * @throws IOException
 	 * 		When the path cannot be read from.
 	 */
-	public void addDex(@Nonnull Path dexFilePath) throws IOException {
+	public Inputs addDex(@Nonnull Path dexFilePath) throws IOException {
 		byte[] dexBytes = Files.readAllBytes(dexFilePath);
-		addResource(new Input(
+		return addResource(new Input(
 				new PathOrigin(dexFilePath),
 				(origin, builder) -> builder.addDexProgramData(dexBytes, origin))
 		);
@@ -97,17 +109,22 @@ public class Inputs {
 	/**
 	 * @param dexBytes
 	 * 		Dex file bytes to add as an input.
+	 *
+	 * @return Self
 	 */
-	public void addDex(@Nonnull byte[] dexBytes) {
-		addResource(new Input((origin, builder) -> builder.addDexProgramData(dexBytes, origin)));
+	public Inputs addDex(@Nonnull byte[] dexBytes) {
+		return addResource(new Input((origin, builder) -> builder.addDexProgramData(dexBytes, origin)));
 	}
 
 	/**
 	 * @param input
 	 * 		Generic input to add.
+	 *
+	 * @return Self
 	 */
-	public void addResource(@Nonnull Input input) {
+	public Inputs addResource(@Nonnull Input input) {
 		inputs.add(input);
+		return this;
 	}
 
 	/**

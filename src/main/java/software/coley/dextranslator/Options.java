@@ -26,20 +26,26 @@ public class Options {
 	 * 		<b>Be wary when using this option</b>. When encountering a bug, please report it
 	 * 		as an issue on GitHub. In cases where the fault can be worked around this
 	 * 		allows our tool stability to improve.
+	 *
+	 * @return Self
 	 */
-	public void setReplaceInvalidMethodBodies(boolean replaceInvalidMethodBodies) {
+	public Options setReplaceInvalidMethodBodies(boolean replaceInvalidMethodBodies) {
 		this.replaceInvalidMethodBodies = replaceInvalidMethodBodies;
+		return this;
 	}
 
 	/**
 	 * @param lenient
 	 * 		Flag to enable options that allow more leniency in the conversion process.
 	 * 		Some input validation will be skipped.
+	 *
+	 * @return Self
 	 */
-	public void setLenient(boolean lenient) {
+	public Options setLenient(boolean lenient) {
 		options.desugarState = lenient ? InternalOptions.DesugarState.OFF : InternalOptions.DesugarState.ON;
 		options.ignoreMissingClasses = lenient;
 		options.disableGenericSignatureValidation = lenient;
+		return this;
 	}
 
 	/**
@@ -47,9 +53,12 @@ public class Options {
 	 * 		Path to write JVM files output to, as a JAR.
 	 * @param classesOnly
 	 * 		Flag to include only classes in the output, skipping any regular files.
+	 *
+	 * @return Self
 	 */
-	public void setJvmArchiveOutput(@Nonnull Path path, boolean classesOnly) {
+	public Options setJvmArchiveOutput(@Nonnull Path path, boolean classesOnly) {
 		options.programConsumer = new ClassFileConsumer.ArchiveConsumer(path, !classesOnly);
+		return this;
 	}
 
 	/**
@@ -57,41 +66,56 @@ public class Options {
 	 * 		Path to write JVM files output to, as a JAR.
 	 * @param classesOnly
 	 * 		Flag to include only classes in the output, skipping any regular files.
+	 *
+	 * @return Self
 	 */
-	public void setJvmDirectoryOutput(@Nonnull Path path, boolean classesOnly) {
+	public Options setJvmDirectoryOutput(@Nonnull Path path, boolean classesOnly) {
 		options.programConsumer = new ClassFileConsumer.DirectoryConsumer(path, !classesOnly);
+		return this;
 	}
 
 	/**
 	 * @param consumer
 	 * 		Generic JVM output consumer.
+	 *
+	 * @return Self
 	 */
-	public void setJvmOutput(@Nonnull ClassFileConsumer consumer) {
+	public Options setJvmOutput(@Nonnull ClassFileConsumer consumer) {
 		options.programConsumer = consumer;
+		return this;
 	}
 
 	/**
 	 * @param path
 	 * 		Path to write the Android dex file output to.
+	 *
+	 * @return Self
 	 */
-	public void setDexFileOutput(@Nonnull Path path) {
+	public Options setDexFileOutput(@Nonnull Path path) {
 		options.programConsumer = new DexIndexedConsumer.ArchiveConsumer(path);
+		return this;
 	}
 
 	/**
 	 * @param path
 	 * 		Root directory to write the Android dex file and additional resources to.
+	 *
+	 * @return Self
 	 */
-	public void setDexDirectoryOutput(@Nonnull Path path) {
+	public Options setDexDirectoryOutput(@Nonnull Path path) {
 		options.programConsumer = new DexIndexedConsumer.DirectoryConsumer(path);
+		return this;
 	}
 
 	/**
 	 * @param consumer
 	 * 		Generic DEX output consumer.
+	 *
+	 * @return Self
 	 */
-	public void setDexOutput(@Nonnull DexIndexedConsumer consumer) {
+	public Options setDexOutput(@Nonnull DexIndexedConsumer consumer) {
 		options.programConsumer = consumer;
+		return this;
 	}
 
 	/**
