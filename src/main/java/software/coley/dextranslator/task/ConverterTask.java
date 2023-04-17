@@ -22,15 +22,14 @@ import com.android.tools.r8.utils.AndroidApp;
 import com.android.tools.r8.utils.InternalOptions;
 import software.coley.dextranslator.Options;
 import software.coley.dextranslator.ir.IRCodeHacking;
+import software.coley.dextranslator.util.ThreadPools;
 
 import javax.annotation.Nonnull;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.function.Supplier;
 
 /**
@@ -56,7 +55,7 @@ import java.util.function.Supplier;
  */
 public class ConverterTask extends AbstractTask<ConverterResult> {
 	private static final Int2ReferenceArrayMap<DebugLocalInfo> EMPTY_ARRAY_MAP = new Int2ReferenceArrayMap<>();
-	private final ExecutorService threadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() - 1);
+	private final ExecutorService threadPool = ThreadPools.newMaxFixedThreadPool();
 	private final Supplier<ApplicationData> dataSupplier;
 
 	/**
@@ -77,7 +76,7 @@ public class ConverterTask extends AbstractTask<ConverterResult> {
 			return fail(new NullPointerException("Application data missing"), future);
 		DexApplication application = applicationData.getApplication();
 		AndroidApp inputApplication = applicationData.getInputApplication();
-		AppView<AppInfo> applicationView = applicationData.getApplicationView();
+		AppView<? extends AppInfo> applicationView = applicationData.getApplicationView();
 
 		// Map the method code implementation to JVM bytecode
 		List<ConverterResult.InvalidMethod> invalidMethods = new ArrayList<>();
@@ -152,17 +151,12 @@ public class ConverterTask extends AbstractTask<ConverterResult> {
 
 		// Convert and store results in app-view.
 		try {
-			new PrimaryD8L8IRConverter(applicationView, EMPTY_TIMING)
-					.convert(applicationView, threadPool);
+			// TODO: When getting proper R8 support, use 'PrimaryR8IRConverter'
+			@SuppressWarnings("unchecked")
+			AppView<AppInfo> castedView = (AppView<AppInfo>) applicationView;
+			new PrimaryD8L8IRConverter(castedView, EMPTY_TIMING)
+					.convert(castedView, threadPool);
 		} catch (Exception ex) {
-			return fail(ex, future);
-		}
-
-
-		// Close any internal archive providers now the application is fully processed.
-		try {
-			inputApplication.closeInternalArchiveProviders();
-		} catch (IOException ex) {
 			return fail(ex, future);
 		}
 

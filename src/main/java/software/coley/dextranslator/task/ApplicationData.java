@@ -15,7 +15,7 @@ import javax.annotation.Nonnull;
  */
 public class ApplicationData {
 	private final AndroidApp inputApplication;
-	private final AppView<AppInfo> applicationView;
+	private final AppView<? extends AppInfo> applicationView;
 
 	/**
 	 * @param inputApplication
@@ -24,7 +24,7 @@ public class ApplicationData {
 	 * 		View of the loaded application and supporting services.
 	 */
 	public ApplicationData(@Nonnull AndroidApp inputApplication,
-						   @Nonnull AppView<AppInfo> applicationView) {
+						   @Nonnull AppView<? extends AppInfo> applicationView) {
 		this.inputApplication = inputApplication;
 		this.applicationView = applicationView;
 	}
@@ -41,7 +41,7 @@ public class ApplicationData {
 	 * @return View of the loaded application and supporting services.
 	 */
 	@Nonnull
-	public AppView<AppInfo> getApplicationView() {
+	public AppView<? extends AppInfo> getApplicationView() {
 		return applicationView;
 	}
 
