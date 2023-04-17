@@ -222,7 +222,10 @@ public class IRCodeHacking {
 			long size = arrayFilledDataPayloadResolver.getSize(payloadOffset);
 			short[] data = arrayFilledDataPayloadResolver.getData(payloadOffset);
 			Value src = builder.readRegister(arrayRef, ValueTypeConstraint.OBJECT);
-			MemberType type = MemberType.valueOf(src.getType().asArrayType().getMemberType().toString());
+			String typeName = src.getType().asArrayType().getMemberType().toString();
+			if (typeName.equals("BYTE") || typeName.equals("BOOLEAN"))
+				typeName = "BOOLEAN_OR_BYTE"; // R8 conventions can be weird sometimes...
+			MemberType type = MemberType.valueOf(typeName);
 			NewArrayFilledData instruction = new NewArrayFilledData(src, width, size, data) {
 
 				@Override
