@@ -1,5 +1,9 @@
 plugins {
     id 'java'
+    id 'application'
+    id 'maven-publish'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
+    id "com.peterabeles.gversion" version "1.10"
 }
 
 group 'software.coley'
@@ -13,10 +17,48 @@ dependencies {
     implementation fileTree(dir: "libs", include: ['*.jar'])
     implementation 'org.ow2.asm:asm:9.5'
     implementation 'com.google.guava:guava:31.1-jre'
-
+    implementation 'info.picocli:picocli:4.7.2'
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+}
+
+// Force generation for gversion data class
+project.compileJava.dependsOn(createVersionFile)
+gversion {
+    srcDir = "src/generated/java/"
+    classPackage = "software.coley.dextranslator"
+    className = "DexTranslatorBuildConfig"
+    dateFormat = "yyyy MM/dd HH:mm"
+    debug = true
+    language = "java"
+    explicitType = false
+    annotate = false
+}
+sourceSets {
+    // Need to add the generated class to the source set
+    main {
+        java {
+            srcDirs 'src/generated/java', 'src/main/java'
+        }
+    }
+}
+
+application {
+    getMainClass().set('software.coley.dextranslator.Main')
+}
+
+shadowJar {
+    // Remove unused classes and files from the fat-jar output
+    minimize {
+        exclude('**/*.ser', '**/*.java', '**/package-info.class', 'module-info.class')
+    }
+
+    relocate 'com.android.tools.r8', 'r8'
+    relocate 'com.google.common', 'guava'
+    relocate 'com.google.j2objc.annotations', 'anno'
+    relocate 'com.google.errorprone.annotations', 'anno'
+    relocate 'javax.annotation', 'anno'
 }
 
 test {

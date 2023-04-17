@@ -5,6 +5,7 @@ build
 */.project
 */.classpath
 */.*
+src/generated/*
 
 .*
 *.bak
