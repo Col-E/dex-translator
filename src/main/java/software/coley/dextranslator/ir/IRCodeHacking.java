@@ -1,0 +1,287 @@
+package software.coley.dextranslator.ir;
+
+import com.android.tools.r8.cf.LoadStoreHelper;
+import com.android.tools.r8.cf.TypeVerificationHelper;
+import com.android.tools.r8.cf.code.CfArrayStore;
+import com.android.tools.r8.cf.code.CfConstNumber;
+import com.android.tools.r8.cf.code.CfNewArray;
+import com.android.tools.r8.cf.code.CfStackInstruction;
+import com.android.tools.r8.dex.code.DexFilledNewArray;
+import com.android.tools.r8.dex.code.DexInstruction;
+import com.android.tools.r8.graph.*;
+import com.android.tools.r8.ir.code.*;
+import com.android.tools.r8.ir.conversion.*;
+import com.android.tools.r8.origin.Origin;
+import sun.misc.Unsafe;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+import java.lang.reflect.Field;
+import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Utility for build {@link IRCode} models that support full translation back into JVM bytecode.
+ *
+ * @author xxDark
+ */
+public class IRCodeHacking {
+	private static final boolean LITTLE_ENDIAN = ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN;
+
+	public static IRCode buildIR(@Nonnull DexCode dexCode,
+								 @Nonnull ProgramMethod method,
+								 @Nonnull AppView<?> appView,
+								 @Nonnull Origin origin) {
+		MethodConversionOptions.MutableMethodConversionOptions conversionOptions = new MethodConversionOptions.MutableMethodConversionOptions(appView.options());
+		return buildIR(dexCode, method, appView, origin, conversionOptions);
+	}
+
+	public static IRCode buildIR(@Nonnull DexCode dexCode,
+								 @Nonnull ProgramMethod method,
+								 @Nonnull AppView<?> appView,
+								 @Nonnull Origin origin,
+								 @Nonnull MethodConversionOptions.MutableMethodConversionOptions conversionOptions) {
+		DexMethod originalMethodSignature = appView.graphLens().getOriginalMethodSignature(method.getReference());
+		DexSourceCode source = new HackyDexSourceCode(dexCode, method, originalMethodSignature, null, appView.dexItemFactory());
+		return IRBuilder.create(method, appView, source, origin)
+				.build(method, conversionOptions);
+	}
+
+	static void swap(@Nonnull CfBuilder builder, int right, int left) {
+		if (right == 1) {
+			if (left == 1) {
+				builder.add(new CfStackInstruction(CfStackInstruction.Opcode.Swap));
+				return;
+			} else if (left == 2) {
+				builder.add(
+						new CfStackInstruction(CfStackInstruction.Opcode.DupX2),
+						new CfStackInstruction(CfStackInstruction.Opcode.Pop)
+				);
+				return;
+			}
+		} else if (right == 2) {
+			if (left == 1) {
+				builder.add(
+						new CfStackInstruction(CfStackInstruction.Opcode.Dup2X1),
+						new CfStackInstruction(CfStackInstruction.Opcode.Pop2)
+				);
+				return;
+			} else if (left == 2) {
+				builder.add(
+						new CfStackInstruction(CfStackInstruction.Opcode.Dup2X2),
+						new CfStackInstruction(CfStackInstruction.Opcode.Pop2)
+				);
+				return;
+			}
+		}
+		throw new IllegalStateException("Not implemented");
+	}
+
+	static short reverseShort(short s) {
+		if (LITTLE_ENDIAN) return Short.reverseBytes(s);
+		return s;
+	}
+
+	static int reverseInt(int i) {
+		if (LITTLE_ENDIAN) return Integer.reverseBytes(i);
+		return i;
+	}
+
+	static long reverseLong(long l) {
+		if (LITTLE_ENDIAN) return Long.reverseBytes(l);
+		return l;
+	}
+
+	private static final class HackyDexSourceCode extends DexSourceCode {
+		private static final Unsafe UNSAFE;
+		private static final long ARRAY_PAYLOAD_RESOLVER;
+		private static final MethodHandle ADD_INSTRUCTION;
+		private static final MethodHandle UPDATE_CURRENT_CATCH_HANDLERS;
+		private static final MethodHandle UPDATE_DEBUG_POSITION;
+		private static final MethodHandle CURRENT_INSTRUCTION;
+
+		static {
+			try {
+				Field f = Unsafe.class.getDeclaredField("theUnsafe");
+				f.setAccessible(true);
+				Unsafe u = (Unsafe) f.get(null);
+				UNSAFE = u;
+				ARRAY_PAYLOAD_RESOLVER = u.objectFieldOffset(DexSourceCode.class.getDeclaredField("arrayFilledDataPayloadResolver"));
+				MethodHandles.Lookup myLookup = MethodHandles.lookup();
+				MethodHandles.Lookup lookup = MethodHandles.privateLookupIn(IRBuilder.class, myLookup);
+				ADD_INSTRUCTION = lookup
+						.findVirtual(IRBuilder.class, "addInstruction", MethodType.methodType(void.class, Instruction.class));
+				lookup = MethodHandles.privateLookupIn(DexSourceCode.class, myLookup);
+				UPDATE_CURRENT_CATCH_HANDLERS = lookup
+						.findVirtual(DexSourceCode.class, "updateCurrentCatchHandlers", MethodType.methodType(void.class, int.class, DexItemFactory.class));
+				UPDATE_DEBUG_POSITION = lookup
+						.findVirtual(DexSourceCode.class, "updateDebugPosition", MethodType.methodType(void.class, int.class, IRBuilder.class));
+				CURRENT_INSTRUCTION = lookup
+						.findSetter(DexSourceCode.class, "currentDexInstruction", DexInstruction.class);
+			} catch (ReflectiveOperationException ex) {
+				throw new ExceptionInInitializerError(ex);
+			}
+		}
+
+		private final DexCode code;
+		private final DexItemFactory factory;
+
+		HackyDexSourceCode(@Nonnull DexCode code,
+						   @Nonnull ProgramMethod method,
+						   @Nonnull DexMethod originalMethod,
+						   @Nullable Position callerPosition,
+						   @Nonnull DexItemFactory factory) {
+			super(code, method, originalMethod, callerPosition, factory);
+			this.code = code;
+			this.factory = factory;
+		}
+
+		@Override
+		public void buildInstruction(@Nonnull IRBuilder builder, int instructionIndex, boolean firstBlockInstruction) {
+			DexInstruction instruction = code.instructions[instructionIndex];
+			if (instruction instanceof DexFilledNewArray newArray) {
+				DexType type = newArray.getType();
+				String descriptor = type.descriptor.toString();
+				ValueTypeConstraint constraint =
+						ValueTypeConstraint.fromTypeDescriptorChar(descriptor.charAt(1));
+				int argumentCount = newArray.A;
+				int wordSize = constraint.requiredRegisters();
+				List<Value> arguments = new ArrayList<>(argumentCount / wordSize);
+				int[] argumentRegisters = {
+						newArray.C,
+						newArray.D,
+						newArray.E,
+						newArray.F,
+						newArray.G
+				};
+				for (int registerIndex = 0; registerIndex < argumentCount; ) {
+					arguments.add(builder.readRegister(argumentRegisters[registerIndex], constraint));
+					registerIndex += wordSize;
+				}
+
+				InvokeNewArray invokeNewArray = new InvokeNewArray(type, null, arguments) {
+					@Override
+					public void insertLoadAndStores(InstructionListIterator it, LoadStoreHelper helper) {
+						helper.loadInValues(this, it);
+						helper.storeOutValue(this, it);
+					}
+
+					@Override
+					public DexType computeVerificationType(AppView<?> appView, TypeVerificationHelper helper) {
+						return type;
+					}
+
+					@Override
+					public void buildCf(CfBuilder builder) {
+						builder.add(
+								new CfConstNumber(argumentCount, ValueType.INT),
+								new CfNewArray(type)
+						);
+						DexType elementType = factory.createType(descriptor.substring(0, descriptor.length() - 2));
+						MemberType memberType = MemberType.fromDexType(elementType);
+						int index = 0;
+						for (int registerIndex = 0; registerIndex < argumentCount; ) {
+							// Re-arrange the stack from:
+							// [element, array]
+							// to [array, array, index, element]
+
+							// [element, array]
+							builder.add(
+									new CfStackInstruction(CfStackInstruction.Opcode.Dup)
+							);  // [element, array, array]
+							swap(builder, 2, wordSize); // [array, array, element]
+							builder.add(new CfConstNumber(index++, ValueType.INT)); // [array, array, element, index]
+							swap(builder, 1, wordSize); // [array, array, index, element]
+							builder.add(new CfArrayStore(memberType)); // [element?, array]
+							registerIndex += wordSize;
+						}
+					}
+				};
+				try {
+					UPDATE_CURRENT_CATCH_HANDLERS.invokeExact((DexSourceCode) this, instructionIndex, factory);
+					UPDATE_DEBUG_POSITION.invokeExact((DexSourceCode) this, instructionIndex, builder);
+					CURRENT_INSTRUCTION.invokeExact((DexSourceCode) this, (DexInstruction) newArray);
+					ADD_INSTRUCTION.invokeExact(builder, (Instruction) invokeNewArray);
+				} catch (Throwable t) {
+					throw new RuntimeException(t);
+				}
+				return;
+			}
+			super.buildInstruction(builder, instructionIndex, firstBlockInstruction);
+		}
+
+		@Override
+		public void resolveAndBuildNewArrayFilledData(int arrayRef, int payloadOffset, @Nonnull IRBuilder builder) {
+			ArrayFilledDataPayloadResolver arrayFilledDataPayloadResolver =
+					(ArrayFilledDataPayloadResolver) UNSAFE.getObject(this, ARRAY_PAYLOAD_RESOLVER);
+			int width = arrayFilledDataPayloadResolver.getElementWidth(payloadOffset);
+			long size = arrayFilledDataPayloadResolver.getSize(payloadOffset);
+			short[] data = arrayFilledDataPayloadResolver.getData(payloadOffset);
+			Value src = builder.readRegister(arrayRef, ValueTypeConstraint.OBJECT);
+			MemberType type = MemberType.valueOf(src.getType().asArrayType().getMemberType().toString());
+			NewArrayFilledData instruction = new NewArrayFilledData(src, width, size, data) {
+
+				@Override
+				public void insertLoadAndStores(InstructionListIterator it, LoadStoreHelper helper) {
+					helper.loadInValues(this, it);
+				}
+
+				@Override
+				public void buildCf(CfBuilder builder) {
+					short[] arrayData = data;
+					switch (element_width) {
+						case 1 -> {
+							for (int i = 0; i < size; i++) {
+								builder.add(
+										new CfStackInstruction(CfStackInstruction.Opcode.Dup),
+										new CfConstNumber(i, ValueType.INT),
+										new CfConstNumber(UNSAFE.getByte(arrayData, Unsafe.ARRAY_SHORT_BASE_OFFSET + i), ValueType.INT),
+										new CfArrayStore(type)
+								);
+							}
+						}
+						case 2 -> {
+							for (int i = 0; i < size; i++) {
+								builder.add(
+										new CfStackInstruction(CfStackInstruction.Opcode.Dup),
+										new CfConstNumber(i, ValueType.INT),
+										new CfConstNumber(reverseShort(UNSAFE.getShort(arrayData, Unsafe.ARRAY_SHORT_BASE_OFFSET + i * 2L)), ValueType.INT),
+										new CfArrayStore(type)
+								);
+							}
+						}
+						case 4 -> {
+							for (int i = 0; i < size; i++) {
+								builder.add(
+										new CfStackInstruction(CfStackInstruction.Opcode.Dup),
+										new CfConstNumber(i, ValueType.INT),
+										new CfConstNumber(reverseInt(UNSAFE.getInt(arrayData, Unsafe.ARRAY_SHORT_BASE_OFFSET + i * 4L)), ValueType.INT),
+										new CfArrayStore(type)
+								);
+							}
+						}
+						case 8 -> {
+							for (int i = 0; i < size; i++) {
+								builder.add(
+										new CfStackInstruction(CfStackInstruction.Opcode.Dup),
+										new CfConstNumber(i, ValueType.INT),
+										new CfConstNumber(reverseLong(UNSAFE.getLong(arrayData, Unsafe.ARRAY_SHORT_BASE_OFFSET + i * 8L)), ValueType.LONG),
+										new CfArrayStore(type)
+								);
+							}
+						}
+					}
+				}
+			};
+			try {
+				ADD_INSTRUCTION.invokeExact(builder, (Instruction) instruction);
+			} catch (Throwable t) {
+				throw new RuntimeException(t);
+			}
+		}
+	}
+}
