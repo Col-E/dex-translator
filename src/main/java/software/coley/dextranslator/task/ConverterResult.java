@@ -12,13 +12,13 @@ import java.util.List;
  * @author Matt Coley
  */
 public class ConverterResult {
-	private final List<ProgramMethod> invalidMethods;
+	private final List<InvalidMethod> invalidMethods;
 
 	/**
 	 * @param invalidMethods
 	 * 		List of methods that could not be converted.
 	 */
-	public ConverterResult(@Nonnull List<ProgramMethod> invalidMethods) {
+	public ConverterResult(@Nonnull List<InvalidMethod> invalidMethods) {
 		this.invalidMethods = invalidMethods;
 	}
 
@@ -28,7 +28,16 @@ public class ConverterResult {
 	 * @see Options#setReplaceInvalidMethodBodies(boolean)
 	 */
 	@Nonnull
-	public List<ProgramMethod> getInvalidMethods() {
+	public List<InvalidMethod> getInvalidMethods() {
 		return invalidMethods;
+	}
+
+	/**
+	 * @param method
+	 * 		Method definition.
+	 * @param exception
+	 * 		Exception with reason indicating why the method is invalid.
+	 */
+	public record InvalidMethod(@Nonnull ProgramMethod method, @Nonnull Exception exception) {
 	}
 }

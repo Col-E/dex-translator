@@ -77,7 +77,7 @@ public class ConverterTask extends AbstractTask<ConverterResult> {
 		AppView<AppInfo> applicationView = applicationData.getApplicationView();
 
 		// Map the method code implementation to JVM bytecode
-		List<ProgramMethod> invalidMethods = new ArrayList<>();
+		List<ConverterResult.InvalidMethod> invalidMethods = new ArrayList<>();
 		CodeRewriter codeRewriter = new CodeRewriter(applicationView);
 		DeadCodeRemover deadCodeRemover = new DeadCodeRemover(applicationView, codeRewriter);
 		application.forEachProgramType(type -> {
@@ -104,7 +104,7 @@ public class ConverterTask extends AbstractTask<ConverterResult> {
 					} catch (Exception ex) {
 						if (options.isReplaceInvalidMethodBodies()) {
 							method.setCode(ThrowNullCode.get(), EMPTY_ARRAY_MAP);
-							invalidMethods.add(programMethod);
+							invalidMethods.add(new ConverterResult.InvalidMethod(programMethod, ex));
 						} else {
 							fail(ex, future);
 							return;
