@@ -7,6 +7,7 @@ import picocli.CommandLine.Parameters;
 import software.coley.dextranslator.Inputs;
 import software.coley.dextranslator.Options;
 import software.coley.dextranslator.task.Converter;
+import software.coley.dextranslator.task.ConverterResult;
 
 import java.io.File;
 import java.util.List;
@@ -26,9 +27,9 @@ public class Dex2Jar implements Callable<Void> {
 			arity = "1..*")
 	private File[] inputFiles;
 
-	@Parameters(index = "1",
+	@Option(names = {"-o", "--out"},
 			description = "Path to jar file to write to.",
-			arity = "1")
+			required = true)
 	private File outputFile;
 
 	@Option(names = {"-l", "--lenient"},
@@ -58,12 +59,14 @@ public class Dex2Jar implements Callable<Void> {
 				.run()
 				.whenComplete((result, error) -> {
 					if (result != null) {
-						List<ProgramMethod> invalidMethods = result.getInvalidMethods();
+						List<ConverterResult.InvalidMethod> invalidMethods = result.getInvalidMethods();
 						if (!invalidMethods.isEmpty()) {
 							System.out.println("Conversion process finished with " + invalidMethods.size() + " invalid methods:");
-							for (ProgramMethod invalidMethod : invalidMethods) {
-								System.out.println(" - " + invalidMethod.getHolder().getTypeName() + "." +
-										invalidMethod.getName() + invalidMethod.getDefinition().descriptor());
+							for (ConverterResult.InvalidMethod invalidMethod : invalidMethods) {
+								ProgramMethod method = invalidMethod.method();
+								String reason = invalidMethod.exception().getMessage();
+								System.out.println(" - " + method.getHolder().getTypeName() + "." +
+										method.getName() + method.getDefinition().descriptor() + " ==> " + reason);
 							}
 						} else {
 							System.out.println("Conversion process finished successfully");
