@@ -17,6 +17,7 @@ import java.nio.file.Path;
 public class Options {
 	private final InternalOptions options = new InternalOptions();
 	private boolean replaceInvalidMethodBodies;
+	private boolean useR8;
 
 	/**
 	 * @param replaceInvalidMethodBodies
@@ -31,6 +32,11 @@ public class Options {
 	 */
 	public Options setReplaceInvalidMethodBodies(boolean replaceInvalidMethodBodies) {
 		this.replaceInvalidMethodBodies = replaceInvalidMethodBodies;
+		return this;
+	}
+
+	public Options setUseR8(boolean useR8) {
+		this.useR8 = useR8;
 		return this;
 	}
 
@@ -116,6 +122,13 @@ public class Options {
 	public Options setDexOutput(@Nonnull DexIndexedConsumer consumer) {
 		options.programConsumer = consumer;
 		return this;
+	}
+
+	/**
+	 * @return Flag for using R8 over D8.
+	 */
+	public boolean isUseR8() {
+		return useR8;
 	}
 
 	/**

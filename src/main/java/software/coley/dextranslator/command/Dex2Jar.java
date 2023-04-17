@@ -57,4 +57,45 @@ public class Dex2Jar extends AbstractConversionCommand {
 				.whenComplete(this::handle);
 		return null;
 	}
+
+
+	@Override
+	public File[] getInputFiles() {
+		return inputFiles;
+	}
+
+	@Override
+	public void setInputFiles(File[] inputFiles) {
+		this.inputFiles = inputFiles;
+	}
+
+	@Override
+	public File getOutputFile() {
+		return outputFile;
+	}
+
+	@Override
+	public void setOutputFile(File outputFile) {
+		this.outputFile = outputFile;
+	}
+
+	@Override
+	public boolean isLenient() {
+		return lenient;
+	}
+
+	@Override
+	public void setLenient(boolean lenient) {
+		this.lenient = lenient;
+	}
+
+	@Override
+	public boolean isReplaceInvalid() {
+		return replaceInvalid;
+	}
+
+	@Override
+	public void setReplaceInvalid(boolean replaceInvalid) {
+		this.replaceInvalid = replaceInvalid;
+	}
 }

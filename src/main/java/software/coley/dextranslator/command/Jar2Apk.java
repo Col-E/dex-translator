@@ -39,6 +39,10 @@ public class Jar2Apk extends AbstractConversionCommand {
 					"Invalid methods will be replaced with no-op behavior.")
 	private boolean replaceInvalid;
 
+	@Option(names = {"-r8"},
+			description = "Flag to enable usage of R8 over D8.")
+	private boolean r8;
+
 	@Override
 	public Void call() {
 		Inputs inputs = new Inputs();
@@ -48,6 +52,7 @@ public class Jar2Apk extends AbstractConversionCommand {
 		Options options = new Options()
 				.setReplaceInvalidMethodBodies(replaceInvalid)
 				.setLenient(lenient)
+				.setUseR8(r8)
 				.setDexFileOutput(outputFile.toPath());
 
 		new Converter()
@@ -56,5 +61,60 @@ public class Jar2Apk extends AbstractConversionCommand {
 				.run()
 				.whenComplete(this::handle);
 		return null;
+	}
+
+	@Override
+	public File[] getInputFiles() {
+		return inputFiles;
+	}
+
+	@Override
+	public void setInputFiles(File[] inputFiles) {
+		this.inputFiles = inputFiles;
+	}
+
+	@Override
+	public File getOutputFile() {
+		return outputFile;
+	}
+
+	@Override
+	public void setOutputFile(File outputFile) {
+		this.outputFile = outputFile;
+	}
+
+	@Override
+	public boolean isLenient() {
+		return lenient;
+	}
+
+	@Override
+	public void setLenient(boolean lenient) {
+		this.lenient = lenient;
+	}
+
+	@Override
+	public boolean isReplaceInvalid() {
+		return replaceInvalid;
+	}
+
+	@Override
+	public void setReplaceInvalid(boolean replaceInvalid) {
+		this.replaceInvalid = replaceInvalid;
+	}
+
+	/**
+	 * @return Flag to use R8 over D8.
+	 */
+	public boolean isR8() {
+		return r8;
+	}
+
+	/**
+	 * @param r8
+	 * 		Flag to use R8 over D8.
+	 */
+	public void setR8(boolean r8) {
+		this.r8 = r8;
 	}
 }

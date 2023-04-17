@@ -1,9 +1,12 @@
 package software.coley.dextranslator.command;
 
 import com.android.tools.r8.graph.ProgramMethod;
+import software.coley.dextranslator.Inputs;
+import software.coley.dextranslator.Options;
 import software.coley.dextranslator.task.Converter;
 import software.coley.dextranslator.task.ConverterResult;
 
+import java.io.File;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -32,4 +35,48 @@ public abstract class AbstractConversionCommand implements Callable<Void> {
 			error.printStackTrace();
 		}
 	}
+
+	/**
+	 * @return Files to plug into {@link Inputs}.
+	 */
+	public abstract File[] getInputFiles();
+
+	/**
+	 * @param inputFiles
+	 * 		Files to plug into {@link Inputs}.
+	 */
+	public abstract void setInputFiles(File[] inputFiles);
+
+	/**
+	 * @return File path to write output to.
+	 */
+	public abstract File getOutputFile();
+
+	/**
+	 * @param outputFile
+	 * 		File path to write output to.
+	 */
+	public abstract void setOutputFile(File outputFile);
+
+	/**
+	 * @return Value of {@link Options#setLenient(boolean)}.
+	 */
+	public abstract boolean isLenient();
+
+	/**
+	 * @param lenient
+	 * 		Value of {@link Options#setLenient(boolean)}.
+	 */
+	public abstract void setLenient(boolean lenient);
+
+	/**
+	 * @return Value of {@link Options#setReplaceInvalidMethodBodies(boolean)}.
+	 */
+	public abstract boolean isReplaceInvalid();
+
+	/**
+	 * @param replaceInvalid
+	 * 		Value of {@link Options#setReplaceInvalidMethodBodies(boolean)}.
+	 */
+	public abstract void setReplaceInvalid(boolean replaceInvalid);
 }
