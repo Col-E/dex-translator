@@ -58,7 +58,7 @@ public class LoaderTask extends AbstractTask<ApplicationData> {
 		}
 
 		// Create app-view of dex application
-		AppView<? extends AppInfo> applicationView;
+		AppView<AppInfo> applicationView;
 		MainDexInfo mainDexInfo = applicationReader.readMainDexClasses(application);
 		SyntheticItems.GlobalSyntheticsStrategy syntheticsStrategy = options.getSyntheticsStrategy();
 		if (options.isUseR8()) {

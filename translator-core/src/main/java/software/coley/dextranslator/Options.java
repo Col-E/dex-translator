@@ -191,7 +191,7 @@ public class Options {
 	 * @return {@code true} when the output is for DEX types.
 	 */
 	public boolean isDexOutput() {
-		return options.isGeneratingDex() || options.isGeneratingDexIndexed() || options.isGeneratingDexFilePerClassFile();
+		return options.isGeneratingDex();
 	}
 
 	/**

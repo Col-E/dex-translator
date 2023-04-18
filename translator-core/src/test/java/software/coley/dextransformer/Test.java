@@ -1,8 +1,16 @@
 package software.coley.dextransformer;
 
+import software.coley.dextranslator.Inputs;
+import software.coley.dextranslator.Loader;
+import software.coley.dextranslator.Options;
+import software.coley.dextranslator.task.ConverterTask;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 public class Test {
 	public static void main(String[] args) throws Exception {
-		dex2jar_obfuscated();
+		jar2apk();
 	}
 
 	static void dex2jar_obfuscated() throws Exception {
@@ -17,12 +25,35 @@ public class Test {
 	}
 
 	static void jar2apk() throws Exception {
-		/*
-		Jar2Apk command = new Jar2Apk();
-		command.setInputFiles(new File[]{new File(Test.class.getResource("/calc.jar").toURI())});
-		command.setOutputFile(new File("build/libs/calc.apk"));
-		command.setR8(true);
-		command.call();
-		 */
+		// TODO: Proper test
+		Path inputPath = Paths.get(Test.class.getResource("/tower.jar").toURI());
+		Inputs inputs = new Inputs().addJarArchive(inputPath);
+		Options options = new Options();
+		new Loader()
+				.setInputs(inputs)
+				.setOptions(options)
+				.run()
+				.whenComplete((result, error) -> {
+					if (error != null)
+						error.printStackTrace();
+					else {
+						// TODO: This fails
+						/*
+						try {
+							byte[] dexFile = result.exportToDexFile();
+							System.out.println(dexFile);
+						} catch (ConversionException ex) {
+							ex.printStackTrace();
+							throw new RuntimeException(ex);
+						}*/
+
+						// TODO: But this works
+						options.setDexFileOutput(Paths.get("class-out.dex"));
+						new ConverterTask(() -> result, options).start()
+								.whenComplete((conversionResult, e2) -> {
+									System.out.println(conversionResult + ":" + e2);
+								});
+					}
+				});
 	}
 }
