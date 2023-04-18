@@ -7,6 +7,7 @@ import com.android.tools.r8.cf.code.CfConstNumber;
 import com.android.tools.r8.cf.code.CfNewArray;
 import com.android.tools.r8.cf.code.CfStackInstruction;
 import com.android.tools.r8.dex.code.DexFilledNewArray;
+import com.android.tools.r8.dex.code.DexFilledNewArrayRange;
 import com.android.tools.r8.dex.code.DexInstruction;
 import com.android.tools.r8.graph.*;
 import com.android.tools.r8.ir.code.*;
@@ -156,6 +157,68 @@ public class IRCodeHacking {
 				};
 				for (int registerIndex = 0; registerIndex < argumentCount; ) {
 					arguments.add(builder.readRegister(argumentRegisters[registerIndex], constraint));
+					registerIndex += wordSize;
+				}
+
+				InvokeNewArray invokeNewArray = new InvokeNewArray(type, null, arguments) {
+					@Override
+					public void insertLoadAndStores(InstructionListIterator it, LoadStoreHelper helper) {
+						helper.loadInValues(this, it);
+						helper.storeOutValue(this, it);
+					}
+
+					@Override
+					public DexType computeVerificationType(AppView<?> appView, TypeVerificationHelper helper) {
+						return type;
+					}
+
+					@Override
+					public void buildCf(CfBuilder builder) {
+						builder.add(
+								new CfConstNumber(argumentCount, ValueType.INT),
+								new CfNewArray(type)
+						);
+						DexType elementType = factory.createType(descriptor.substring(0, descriptor.length() - 2));
+						MemberType memberType = MemberType.fromDexType(elementType);
+						int index = 0;
+						for (int registerIndex = 0; registerIndex < argumentCount; ) {
+							// Re-arrange the stack from:
+							// [element, array]
+							// to [array, array, index, element]
+
+							// [element, array]
+							builder.add(
+									new CfStackInstruction(CfStackInstruction.Opcode.Dup)
+							);  // [element, array, array]
+							swap(builder, 2, wordSize); // [array, array, element]
+							builder.add(new CfConstNumber(index++, ValueType.INT)); // [array, array, element, index]
+							swap(builder, 1, wordSize); // [array, array, index, element]
+							builder.add(new CfArrayStore(memberType)); // [element?, array]
+							registerIndex += wordSize;
+						}
+					}
+				};
+				try {
+					UPDATE_CURRENT_CATCH_HANDLERS.invokeExact((DexSourceCode) this, instructionIndex, factory);
+					UPDATE_DEBUG_POSITION.invokeExact((DexSourceCode) this, instructionIndex, builder);
+					CURRENT_INSTRUCTION.invokeExact((DexSourceCode) this, (DexInstruction) newArray);
+					ADD_INSTRUCTION.invokeExact(builder, (Instruction) invokeNewArray);
+				} catch (Throwable t) {
+					throw new RuntimeException(t);
+				}
+				return;
+			} else if (instruction instanceof DexFilledNewArrayRange newArray) {
+				DexType type = newArray.getType();
+				String descriptor = type.descriptor.toString();
+				ValueTypeConstraint constraint =
+						ValueTypeConstraint.fromTypeDescriptorChar(descriptor.charAt(1));
+				int argumentCount = newArray.AA;
+				int wordSize = constraint.requiredRegisters();
+				List<Value> arguments = new ArrayList<>(argumentCount / wordSize);
+				int registerStart = newArray.CCCC;
+				int registerEnd = registerStart + argumentCount;
+				for (int registerIndex = registerStart; registerIndex < registerEnd; ) {
+					arguments.add(builder.readRegister(registerIndex, constraint));
 					registerIndex += wordSize;
 				}
 
