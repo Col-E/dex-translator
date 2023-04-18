@@ -12,6 +12,7 @@ import com.android.tools.r8.graph.*;
 import com.android.tools.r8.ir.code.*;
 import com.android.tools.r8.ir.conversion.*;
 import com.android.tools.r8.origin.Origin;
+import software.coley.dextranslator.util.UnsafeUtil;
 import sun.misc.Unsafe;
 
 import javax.annotation.Nonnull;
@@ -19,7 +20,6 @@ import javax.annotation.Nullable;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.lang.reflect.Field;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
@@ -97,7 +97,6 @@ public class IRCodeHacking {
 	}
 
 	private static final class HackyDexSourceCode extends DexSourceCode {
-		private static final Unsafe UNSAFE;
 		private static final long ARRAY_PAYLOAD_RESOLVER;
 		private static final MethodHandle ADD_INSTRUCTION;
 		private static final MethodHandle UPDATE_CURRENT_CATCH_HANDLERS;
@@ -106,11 +105,8 @@ public class IRCodeHacking {
 
 		static {
 			try {
-				Field f = Unsafe.class.getDeclaredField("theUnsafe");
-				f.setAccessible(true);
-				Unsafe u = (Unsafe) f.get(null);
-				UNSAFE = u;
-				ARRAY_PAYLOAD_RESOLVER = u.objectFieldOffset(DexSourceCode.class.getDeclaredField("arrayFilledDataPayloadResolver"));
+				Unsafe unsafe = UnsafeUtil.getUnsafe();
+				ARRAY_PAYLOAD_RESOLVER = unsafe.objectFieldOffset(DexSourceCode.class.getDeclaredField("arrayFilledDataPayloadResolver"));
 				MethodHandles.Lookup myLookup = MethodHandles.lookup();
 				MethodHandles.Lookup lookup = MethodHandles.privateLookupIn(IRBuilder.class, myLookup);
 				ADD_INSTRUCTION = lookup
@@ -216,8 +212,9 @@ public class IRCodeHacking {
 
 		@Override
 		public void resolveAndBuildNewArrayFilledData(int arrayRef, int payloadOffset, @Nonnull IRBuilder builder) {
+			Unsafe unsafe = UnsafeUtil.getUnsafe();
 			ArrayFilledDataPayloadResolver arrayFilledDataPayloadResolver =
-					(ArrayFilledDataPayloadResolver) UNSAFE.getObject(this, ARRAY_PAYLOAD_RESOLVER);
+					(ArrayFilledDataPayloadResolver) unsafe.getObject(this, ARRAY_PAYLOAD_RESOLVER);
 			int width = arrayFilledDataPayloadResolver.getElementWidth(payloadOffset);
 			long size = arrayFilledDataPayloadResolver.getSize(payloadOffset);
 			short[] data = arrayFilledDataPayloadResolver.getData(payloadOffset);
@@ -235,6 +232,7 @@ public class IRCodeHacking {
 
 				@Override
 				public void buildCf(CfBuilder builder) {
+					Unsafe unsafe = UnsafeUtil.getUnsafe();
 					short[] arrayData = data;
 					switch (element_width) {
 						case 1 -> {
@@ -242,7 +240,7 @@ public class IRCodeHacking {
 								builder.add(
 										new CfStackInstruction(CfStackInstruction.Opcode.Dup),
 										new CfConstNumber(i, ValueType.INT),
-										new CfConstNumber(UNSAFE.getByte(arrayData, Unsafe.ARRAY_SHORT_BASE_OFFSET + i), ValueType.INT),
+										new CfConstNumber(unsafe.getByte(arrayData, Unsafe.ARRAY_SHORT_BASE_OFFSET + i), ValueType.INT),
 										new CfArrayStore(type)
 								);
 							}
@@ -252,7 +250,7 @@ public class IRCodeHacking {
 								builder.add(
 										new CfStackInstruction(CfStackInstruction.Opcode.Dup),
 										new CfConstNumber(i, ValueType.INT),
-										new CfConstNumber(reverseShort(UNSAFE.getShort(arrayData, Unsafe.ARRAY_SHORT_BASE_OFFSET + i * 2L)), ValueType.INT),
+										new CfConstNumber(reverseShort(unsafe.getShort(arrayData, Unsafe.ARRAY_SHORT_BASE_OFFSET + i * 2L)), ValueType.INT),
 										new CfArrayStore(type)
 								);
 							}
@@ -262,7 +260,7 @@ public class IRCodeHacking {
 								builder.add(
 										new CfStackInstruction(CfStackInstruction.Opcode.Dup),
 										new CfConstNumber(i, ValueType.INT),
-										new CfConstNumber(reverseInt(UNSAFE.getInt(arrayData, Unsafe.ARRAY_SHORT_BASE_OFFSET + i * 4L)), ValueType.INT),
+										new CfConstNumber(reverseInt(unsafe.getInt(arrayData, Unsafe.ARRAY_SHORT_BASE_OFFSET + i * 4L)), ValueType.INT),
 										new CfArrayStore(type)
 								);
 							}
@@ -272,7 +270,7 @@ public class IRCodeHacking {
 								builder.add(
 										new CfStackInstruction(CfStackInstruction.Opcode.Dup),
 										new CfConstNumber(i, ValueType.INT),
-										new CfConstNumber(reverseLong(UNSAFE.getLong(arrayData, Unsafe.ARRAY_SHORT_BASE_OFFSET + i * 8L)), ValueType.LONG),
+										new CfConstNumber(reverseLong(unsafe.getLong(arrayData, Unsafe.ARRAY_SHORT_BASE_OFFSET + i * 8L)), ValueType.LONG),
 										new CfArrayStore(type)
 								);
 							}
