@@ -34,6 +34,16 @@ public class Options {
 	}
 
 	/**
+	 * New options instance.
+	 */
+	public Options() {
+		// String switch conversion allows for some optimizations to be made in the IR, but causes problems
+		// with our current handling of converting IR to dex/jvm output.
+		// Later we can look into enabling it again and properly replacing it.
+		options.enableStringSwitchConversion = false;
+	}
+
+	/**
 	 * @param replaceInvalidMethodBodies
 	 * 		Flag to enable replacing the {@link Code} of methods which are invalid
 	 * 		for writing to the current target output <i>(Either JVM or Android)</i>.
