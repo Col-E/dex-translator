@@ -18,6 +18,7 @@ import com.android.tools.r8.ir.regalloc.RegisterAllocator;
 import com.android.tools.r8.it.unimi.dsi.fastutil.ints.Int2ReferenceArrayMap;
 import com.android.tools.r8.jar.CfApplicationWriter;
 import com.android.tools.r8.origin.Origin;
+import com.android.tools.r8.shaking.AppInfoWithLiveness;
 import com.android.tools.r8.utils.AndroidApp;
 import com.android.tools.r8.utils.InternalOptions;
 import software.coley.dextranslator.Options;
@@ -152,6 +153,7 @@ public class ConverterTask extends AbstractTask<ConverterResult> {
 		// Convert and store results in app-view.
 		try {
 			// TODO: When getting proper R8 support, use 'PrimaryR8IRConverter'
+			//  - if (options.isUseR8()) ... else ...
 			@SuppressWarnings("unchecked")
 			AppView<AppInfo> castedView = (AppView<AppInfo>) applicationView;
 			new PrimaryD8L8IRConverter(castedView, EMPTY_TIMING)
@@ -188,6 +190,7 @@ public class ConverterTask extends AbstractTask<ConverterResult> {
 			threadPool.shutdownNow();
 		} catch (Exception ignored) {
 			// We're already done exporting, so it doesn't really matter.
+			threadPool.shutdownNow();
 		}
 
 		// Done

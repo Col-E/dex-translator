@@ -8,6 +8,7 @@ import com.android.tools.r8.graph.DexApplication;
 import com.android.tools.r8.shaking.MainDexInfo;
 import com.android.tools.r8.synthesis.SyntheticItems;
 import com.android.tools.r8.utils.AndroidApp;
+import com.android.tools.r8.utils.InternalOptions;
 import software.coley.dextranslator.Inputs;
 import software.coley.dextranslator.Options;
 
@@ -46,7 +47,8 @@ public class LoaderTask extends AbstractTask<ApplicationData> {
 			return fail(ex, future);
 		}
 		AndroidApp inputApplication = inputs.populate(builder).build();
-		ApplicationReader applicationReader = new ApplicationReader(inputApplication, options.getInternalOptions(), EMPTY_TIMING);
+		InternalOptions internalOptions = options.getInternalOptions();
+		ApplicationReader applicationReader = new ApplicationReader(inputApplication, internalOptions, EMPTY_TIMING);
 		DexApplication application;
 		try {
 			application = applicationReader.read().toDirect();
@@ -56,15 +58,18 @@ public class LoaderTask extends AbstractTask<ApplicationData> {
 
 		// Create app-view of dex application
 		AppView<? extends AppInfo> applicationView;
-		MainDexInfo mainInfo = applicationReader.readMainDexClasses(application);
+		MainDexInfo mainDexInfo = applicationReader.readMainDexClasses(application);
 		SyntheticItems.GlobalSyntheticsStrategy syntheticsStrategy = options.getSyntheticsStrategy();
-		AppInfo applicationInfo = AppInfo.createInitialAppInfo(application, syntheticsStrategy, mainInfo);
 		if (options.isUseR8()) {
-			// TODO: Look at R8 in google's code and figure out why calling 'AppView.createForR8(application)' causes
-			//        ClassCastExceptions down the road.
-			applicationView = AppView.createForSimulatingD8InR8(applicationInfo);
+			// TODO: Paste from R8 and cleanup after.
+			//  - Pay attention to which view instance is used when because it really matters
+			//  - Some will take views with Liveness, others with just the hierarchy
+			//  - Using the wrong one will cause problems down the road in IR conversion/optimization
+			AppInfo info = AppInfo.createInitialAppInfo(application, syntheticsStrategy, mainDexInfo);
+			applicationView = AppView.createForSimulatingD8InR8(info);
 		} else {
-			applicationView = AppView.createForD8(applicationInfo);
+			AppInfo info = AppInfo.createInitialAppInfo(application, syntheticsStrategy, mainDexInfo);
+			applicationView = AppView.createForD8(info);
 		}
 
 		// Close any internal archive providers now the application is fully processed.
