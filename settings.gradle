@@ -1,2 +1,5 @@
 rootProject.name = 'dex-translator'
 
+include 'translator-core'
+include 'translator-cli'
+

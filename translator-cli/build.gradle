@@ -1,0 +1,26 @@
+plugins {
+    id 'application'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
+}
+
+dependencies {
+    implementation project(':translator-core')
+    implementation 'info.picocli:picocli:4.7.2'
+}
+
+application {
+    getMainClass().set('software.coley.dextranslator.Main')
+}
+
+shadowJar {
+    // Remove unused classes and files from the fat-jar output
+    minimize {
+        exclude('**/*.ser', '**/*.java', '**/package-info.class', 'module-info.class')
+    }
+
+    relocate 'com.android.tools.r8', 'r8'
+    relocate 'com.google.common', 'guava'
+    relocate 'com.google.j2objc.annotations', 'anno'
+    relocate 'com.google.errorprone.annotations', 'anno'
+    relocate 'javax.annotation', 'anno'
+}

@@ -1,0 +1,42 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id "com.peterabeles.gversion" version "1.10"
+}
+
+dependencies {
+    dependencies {
+        api fileTree(dir: "../libs", include: ['*.jar'])
+    }
+
+    api 'org.ow2.asm:asm:9.5'
+    api 'com.google.guava:guava:31.1-jre'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+}
+
+// Force generation for gversion data class
+project.compileJava.dependsOn(createVersionFile)
+gversion {
+    srcDir = "src/generated/java/"
+    classPackage = "software.coley.dextranslator"
+    className = "DexTranslatorBuildConfig"
+    dateFormat = "yyyy MM/dd HH:mm"
+    debug = true
+    language = "java"
+    explicitType = false
+    annotate = false
+}
+sourceSets {
+    // Need to add the generated class to the source set
+    main {
+        java {
+            srcDirs 'src/generated/java', 'src/main/java'
+        }
+    }
+}
+
+test {
+    useJUnitPlatform()
+}
