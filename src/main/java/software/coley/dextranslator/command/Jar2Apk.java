@@ -1,13 +1,19 @@
 package software.coley.dextranslator.command;
 
+import com.android.tools.r8.graph.DexItemFactory;
+import com.android.tools.r8.shaking.ProguardConfiguration;
+import com.android.tools.r8.utils.Reporter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 import software.coley.dextranslator.Inputs;
 import software.coley.dextranslator.Options;
+import software.coley.dextranslator.proguard.AllClassNames;
 import software.coley.dextranslator.task.Converter;
 
 import java.io.File;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Command to convert one or more JAR files to an APK file.
@@ -53,6 +59,7 @@ public class Jar2Apk extends AbstractConversionCommand {
 				.setReplaceInvalidMethodBodies(replaceInvalid)
 				.setLenient(lenient)
 				.setUseR8(r8)
+				.setProguardConfiguration(r8 ? newProguardConfig() : null)
 				.setDexFileOutput(outputFile.toPath());
 
 		new Converter()
@@ -116,5 +123,15 @@ public class Jar2Apk extends AbstractConversionCommand {
 	 */
 	public void setR8(boolean r8) {
 		this.r8 = r8;
+	}
+
+	private static ProguardConfiguration newProguardConfig() {
+		ProguardConfiguration.Builder builder = ProguardConfiguration.builder(new DexItemFactory(), new Reporter());
+		builder.disableObfuscation();
+		builder.addDontNotePattern(AllClassNames.INSTANCE);
+		builder.addDontWarnPattern(AllClassNames.INSTANCE);
+		builder.addKeepAttributePatterns(Collections.singletonList("*"));
+		builder.setVerbose(true);
+		return builder.build();
 	}
 }

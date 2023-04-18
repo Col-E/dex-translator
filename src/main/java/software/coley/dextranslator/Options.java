@@ -3,10 +3,13 @@ package software.coley.dextranslator;
 import com.android.tools.r8.ClassFileConsumer;
 import com.android.tools.r8.DexIndexedConsumer;
 import com.android.tools.r8.graph.Code;
+import com.android.tools.r8.shaking.ProguardConfiguration;
 import com.android.tools.r8.synthesis.SyntheticItems;
 import com.android.tools.r8.utils.InternalOptions;
+import software.coley.dextranslator.util.UnsafeUtil;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.nio.file.Path;
 
 /**
@@ -15,9 +18,20 @@ import java.nio.file.Path;
  * @author Matt Coley
  */
 public class Options {
+	private static final long proguardConfigurationOffset;
 	private final InternalOptions options = new InternalOptions();
 	private boolean replaceInvalidMethodBodies;
 	private boolean useR8;
+
+	static {
+		try {
+			proguardConfigurationOffset = UnsafeUtil.getUnsafe()
+					.objectFieldOffset(InternalOptions.class
+							.getDeclaredField("proguardConfiguration"));
+		} catch (Exception ex) {
+			throw new IllegalStateException(ex);
+		}
+	}
 
 	/**
 	 * @param replaceInvalidMethodBodies
@@ -35,6 +49,24 @@ public class Options {
 		return this;
 	}
 
+	/**
+	 * @param proguardConfiguration
+	 * 		Optional proguard configuration used when {@link #isUseR8()} is {@code true}.
+	 *
+	 * @return Self
+	 */
+	public Options setProguardConfiguration(@Nullable ProguardConfiguration proguardConfiguration) {
+		UnsafeUtil.unchecked(() -> UnsafeUtil.getUnsafe()
+				.getAndSetObject(options, proguardConfigurationOffset, proguardConfiguration));
+		return this;
+	}
+
+	/**
+	 * @param useR8
+	 * 		Flag for using R8 over D8.
+	 *
+	 * @return Self
+	 */
 	public Options setUseR8(boolean useR8) {
 		this.useR8 = useR8;
 		return this;
@@ -179,4 +211,11 @@ public class Options {
 		return options;
 	}
 
+	/**
+	 * @return Proguard configuration, used when {@link #isUseR8()} is {@code true}.
+	 */
+	@Nullable
+	public ProguardConfiguration getProguardConfiguration() {
+		return options.getProguardConfiguration();
+	}
 }
