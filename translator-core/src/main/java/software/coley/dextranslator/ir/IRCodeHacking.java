@@ -179,8 +179,7 @@ public class IRCodeHacking {
 								new CfConstNumber(argumentCount, ValueType.INT),
 								new CfNewArray(type)
 						);
-						DexType elementType = factory.createType(descriptor.substring(0, descriptor.length() - 2));
-						MemberType memberType = MemberType.fromDexType(elementType);
+						MemberType memberType = getArrayMemberType(descriptor);
 						int index = 0;
 						for (int registerIndex = 0; registerIndex < argumentCount; ) {
 							// Re-arrange the stack from:
@@ -242,8 +241,7 @@ public class IRCodeHacking {
 								new CfConstNumber(argumentCount, ValueType.INT),
 								new CfNewArray(type)
 						);
-						DexType elementType = factory.createType(descriptor.substring(0, descriptor.length() - 2));
-						MemberType memberType = MemberType.fromDexType(elementType);
+						MemberType memberType = getArrayMemberType(descriptor);
 						int index = 0;
 						for (int registerIndex = 0; registerIndex < argumentCount; ) {
 							// Re-arrange the stack from:
@@ -348,6 +346,12 @@ public class IRCodeHacking {
 			} catch (Throwable t) {
 				throw new RuntimeException(t);
 			}
+		}
+
+		private MemberType getArrayMemberType(String arrayDescriptor) {
+			int lastDim = arrayDescriptor.lastIndexOf('[');
+			char next = arrayDescriptor.charAt(lastDim + 1);
+			return MemberType.fromTypeDescriptorChar(next);
 		}
 	}
 }
