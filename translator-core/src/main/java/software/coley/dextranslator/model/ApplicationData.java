@@ -16,7 +16,6 @@ import software.coley.dextranslator.util.UnsafeUtil;
 import sun.misc.Unsafe;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.HashMap;
@@ -65,7 +64,7 @@ public record ApplicationData(@Nonnull AndroidApp inputApplication,
 		// Read the application data from the loaded content.
 		try {
 			ApplicationReader applicationReader = new ApplicationReader(inputApplication, options, Timing.empty());
-			DexApplication application = applicationReader.read().toDirect();
+			DexApplication application = applicationReader.read();
 			return new ApplicationData(inputApplication, application);
 		} finally {
 			// Close any internal archive providers now the application is fully processed.
@@ -80,13 +79,13 @@ public record ApplicationData(@Nonnull AndroidApp inputApplication,
 	 * @return View of the application.
 	 */
 	@Nonnull
-	public AppView<AppInfo> createView(@Nullable InternalOptions optionsForView) {
+	public AppView<AppInfo> createView(@Nonnull InternalOptions optionsForView) {
 		// Create a shallow-copy of the operation modifications do not affect the original copy held by our class.
-		DexApplication applicationCopy = application.builder().build();
+		DexApplication applicationCopy = copyApplication(optionsForView);
 
 		// Synthesis strategy will almost always be single-output mode.
 		SyntheticItems.GlobalSyntheticsStrategy syntheticsStrategy =
-				optionsForView == null || optionsForView.isGeneratingDexIndexed() ?
+				optionsForView.isGeneratingDexIndexed() ?
 						SyntheticItems.GlobalSyntheticsStrategy.forSingleOutputMode() :
 						SyntheticItems.GlobalSyntheticsStrategy.forPerFileMode();
 		if (optionsForView != applicationCopy.options) {
@@ -98,6 +97,7 @@ public record ApplicationData(@Nonnull AndroidApp inputApplication,
 				unsafe.getAndSetObject(applicationCopy, optionsOffset, optionsForView);
 			});
 		}
+
 		// Read main dex info, then wrap into info-model and finally the view.
 		MainDexInfo mainDexInfo = readMainDexInfoFrom(inputApplication, applicationCopy);
 		AppInfo info = AppInfo.createInitialAppInfo(applicationCopy, syntheticsStrategy, mainDexInfo);
@@ -181,6 +181,20 @@ public record ApplicationData(@Nonnull AndroidApp inputApplication,
 	 */
 	public void close() throws IOException {
 		inputApplication.signalFinishedToProviders(null);
+	}
+
+	/**
+	 * @param options
+	 * 		Options providing context for the copy operation.
+	 *
+	 * @return Copy of application instance.
+	 */
+	@Nonnull
+	private DexApplication copyApplication(@Nonnull InternalOptions options) {
+		DexApplication copy = application.builder().build();
+		if (options.isGeneratingDex())
+			copy = copy.toDirect(); // This operation is SLOW, but seems to be needed to compile back to DEX
+		return copy;
 	}
 
 	/**
