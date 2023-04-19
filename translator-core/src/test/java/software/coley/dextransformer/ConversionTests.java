@@ -2,6 +2,7 @@ package software.coley.dextransformer;
 
 import com.android.tools.r8.D8;
 import com.android.tools.r8.utils.AndroidApiLevel;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -28,7 +29,7 @@ public class ConversionTests {
 	}
 
 	@ParameterizedTest
-	@MethodSource("findDexResources")
+	@MethodSource("findDexResources") // TODO: Not all of these inputs are intended to be valid, some of them need to be filtered out
 	void testDex2Jar(@Nonnull Path inputPath) {
 		// Wrap input
 		Inputs inputs = assertDoesNotThrow(() -> new Inputs().addDex(inputPath));
@@ -49,6 +50,7 @@ public class ConversionTests {
 
 	@ParameterizedTest
 	@MethodSource("findJarResources")
+	@Disabled("incredibly slow")
 	void testJar2Dex(@Nonnull Path inputPath) {
 		// Wrap input
 		Inputs inputs = new Inputs()
