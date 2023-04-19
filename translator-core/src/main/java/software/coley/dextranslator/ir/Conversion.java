@@ -11,18 +11,21 @@ import com.android.tools.r8.graph.*;
 import com.android.tools.r8.graph.bytecodemetadata.BytecodeMetadataProvider;
 import com.android.tools.r8.ir.code.IRCode;
 import com.android.tools.r8.ir.conversion.*;
+import com.android.tools.r8.ir.desugar.desugaredlibrary.DesugaredLibraryAmender;
 import com.android.tools.r8.ir.optimize.CodeRewriter;
 import com.android.tools.r8.ir.optimize.DeadCodeRemover;
 import com.android.tools.r8.ir.regalloc.RegisterAllocator;
 import com.android.tools.r8.it.unimi.dsi.fastutil.ints.Int2ReferenceArrayMap;
 import com.android.tools.r8.jar.CfApplicationWriter;
 import com.android.tools.r8.origin.Origin;
+import com.android.tools.r8.synthesis.SyntheticItems;
 import com.android.tools.r8.utils.AndroidApp;
 import com.android.tools.r8.utils.InternalOptions;
 import com.android.tools.r8.utils.Timing;
 import software.coley.dextranslator.model.ApplicationData;
 import software.coley.dextranslator.util.ThreadPools;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -31,14 +34,17 @@ public class Conversion {
 	private static final Int2ReferenceArrayMap<DebugLocalInfo> EMPTY_ARRAY_MAP = new Int2ReferenceArrayMap<>();
 	protected static final Timing EMPTY_TIMING = Timing.empty();
 
-	// TODO: Want to operate off of a snapshot of the application data, so that any
-	//  transforms here do not affect the upstream state. Currently its assumed the
-	//  passed value is a copy, but we should have stronger guarantees
-	public static ConversionResult convert(ApplicationData applicationData,  InternalOptions options, boolean replaceInvalid)
+	@Nonnull
+	public static ConversionResult convert(@Nonnull ApplicationData applicationData,
+										   @Nonnull InternalOptions options, boolean replaceInvalid)
 			throws ConversionIRReplacementException, ConversionD8ProcessingException, ConversionExportException {
-		DexApplication application = applicationData.getApplication();
 		AndroidApp inputApplication = applicationData.inputApplication();
-		AppView<AppInfo> applicationView = applicationData.applicationView();
+		AppView<AppInfo> applicationView = applicationData.createView(options);
+		DexApplication application = applicationView.app();
+
+		// Run pre-processing operations.
+		DesugaredLibraryAmender.run(applicationView);
+		SyntheticItems.collectSyntheticInputs(applicationView);
 
 		// Track which methods could not be converted and are replaced (only when the replace flag is set)
 		List<ConversionResult.InvalidMethod> invalidMethods = new ArrayList<>();
@@ -111,11 +117,13 @@ public class Conversion {
 		try {
 			new PrimaryD8L8IRConverter(applicationView, EMPTY_TIMING)
 					.convert(applicationView, threadPool);
+
+			// Conversion process marks info as obsolete.
+			applicationView.appInfo().unsetObsolete();
 		} catch (Exception ex) {
 			threadPool.shutdownNow();
 			throw new ConversionD8ProcessingException(ex, options.isGeneratingClassFiles());
 		}
-
 		// Handle writing output
 		try {
 			Marker marker = options.getMarker();

@@ -8,7 +8,7 @@ import javax.annotation.Nonnull;
 import java.util.List;
 
 /**
- * Summary of {@link ConverterTask} results.
+ * Summary of {@link Conversion} results.
  *
  * @author Matt Coley
  */

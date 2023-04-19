@@ -5,7 +5,7 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 import software.coley.dextranslator.Inputs;
 import software.coley.dextranslator.Options;
-import software.coley.dextranslator.Converter;
+import software.coley.dextranslator.task.Converter;
 
 import java.io.File;
 

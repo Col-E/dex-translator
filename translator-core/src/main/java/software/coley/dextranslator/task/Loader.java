@@ -1,7 +1,8 @@
-package software.coley.dextranslator;
+package software.coley.dextranslator.task;
 
+import software.coley.dextranslator.Inputs;
+import software.coley.dextranslator.Options;
 import software.coley.dextranslator.model.ApplicationData;
-import software.coley.dextranslator.task.LoaderTask;
 
 import javax.annotation.Nonnull;
 import java.util.concurrent.CompletableFuture;

@@ -3,7 +3,7 @@ package software.coley.dextranslator.command;
 import com.android.tools.r8.graph.ProgramMethod;
 import software.coley.dextranslator.Inputs;
 import software.coley.dextranslator.Options;
-import software.coley.dextranslator.Converter;
+import software.coley.dextranslator.task.Converter;
 import software.coley.dextranslator.ir.ConversionResult;
 
 import java.io.File;

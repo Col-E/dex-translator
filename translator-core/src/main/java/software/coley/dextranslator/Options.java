@@ -2,14 +2,12 @@ package software.coley.dextranslator;
 
 import com.android.tools.r8.ClassFileConsumer;
 import com.android.tools.r8.DexIndexedConsumer;
+import com.android.tools.r8.dex.Marker;
 import com.android.tools.r8.graph.Code;
-import com.android.tools.r8.shaking.ProguardConfiguration;
-import com.android.tools.r8.synthesis.SyntheticItems;
+import com.android.tools.r8.utils.AndroidApiLevel;
 import com.android.tools.r8.utils.InternalOptions;
-import software.coley.dextranslator.util.UnsafeUtil;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.nio.file.Path;
 
 /**
@@ -18,20 +16,8 @@ import java.nio.file.Path;
  * @author Matt Coley
  */
 public class Options {
-	private static final long proguardConfigurationOffset;
 	private final InternalOptions options = new InternalOptions();
 	private boolean replaceInvalidMethodBodies;
-	private boolean useR8;
-
-	static {
-		try {
-			proguardConfigurationOffset = UnsafeUtil.getUnsafe()
-					.objectFieldOffset(InternalOptions.class
-							.getDeclaredField("proguardConfiguration"));
-		} catch (Exception ex) {
-			throw new IllegalStateException(ex);
-		}
-	}
 
 	/**
 	 * New options instance.
@@ -41,6 +27,10 @@ public class Options {
 		// with our current handling of converting IR to dex/jvm output.
 		// Later we can look into enabling it again and properly replacing it.
 		options.enableStringSwitchConversion = false;
+
+		// Currently we only support D8 usage.
+		// It does all the translation work we need, and we do not need any optimizer capabilities of R8.
+		options.tool = Marker.Tool.D8;
 	}
 
 	/**
@@ -60,25 +50,13 @@ public class Options {
 	}
 
 	/**
-	 * @param proguardConfiguration
-	 * 		Optional proguard configuration used when {@link #isUseR8()} is {@code true}.
+	 * @param level
+	 * 		API level to target for DEX outputs.
 	 *
 	 * @return Self
 	 */
-	public Options setProguardConfiguration(@Nullable ProguardConfiguration proguardConfiguration) {
-		UnsafeUtil.unchecked(() -> UnsafeUtil.getUnsafe()
-				.getAndSetObject(options, proguardConfigurationOffset, proguardConfiguration));
-		return this;
-	}
-
-	/**
-	 * @param useR8
-	 * 		Flag for using R8 over D8.
-	 *
-	 * @return Self
-	 */
-	public Options setUseR8(boolean useR8) {
-		this.useR8 = useR8;
+	public Options setApiLevel(AndroidApiLevel level) {
+		options.setMinApiLevel(level);
 		return this;
 	}
 
@@ -167,13 +145,6 @@ public class Options {
 	}
 
 	/**
-	 * @return Flag for using R8 over D8.
-	 */
-	public boolean isUseR8() {
-		return useR8;
-	}
-
-	/**
 	 * @return {@code true} when the output is configured.
 	 */
 	public boolean hasConfiguredOutput() {
@@ -204,28 +175,18 @@ public class Options {
 	}
 
 	/**
-	 * @return Synthetic item strategy based on the target output type.
+	 * @return Minimum API level to target for DEX file outputs.
 	 */
 	@Nonnull
-	public SyntheticItems.GlobalSyntheticsStrategy getSyntheticsStrategy() {
-		return options.isGeneratingDexIndexed() ?
-				SyntheticItems.GlobalSyntheticsStrategy.forSingleOutputMode() :
-				SyntheticItems.GlobalSyntheticsStrategy.forPerFileMode();
+	public AndroidApiLevel getMinimumApiLevel() {
+		return options.getMinApiLevel();
 	}
 
 	/**
-	 * @return Internal options for D8/R8.
+	 * @return Internal options for D8.
 	 */
 	@Nonnull
 	public InternalOptions getInternalOptions() {
 		return options;
-	}
-
-	/**
-	 * @return Proguard configuration, used when {@link #isUseR8()} is {@code true}.
-	 */
-	@Nullable
-	public ProguardConfiguration getProguardConfiguration() {
-		return options.getProguardConfiguration();
 	}
 }

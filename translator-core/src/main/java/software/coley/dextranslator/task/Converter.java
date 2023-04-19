@@ -1,7 +1,8 @@
-package software.coley.dextranslator;
+package software.coley.dextranslator.task;
 
+import software.coley.dextranslator.Inputs;
+import software.coley.dextranslator.Options;
 import software.coley.dextranslator.ir.ConversionResult;
-import software.coley.dextranslator.task.ConverterTask;
 
 import javax.annotation.Nonnull;
 import java.util.concurrent.CompletableFuture;

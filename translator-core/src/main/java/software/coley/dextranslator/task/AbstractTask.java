@@ -1,6 +1,5 @@
 package software.coley.dextranslator.task;
 
-import com.android.tools.r8.utils.Timing;
 import software.coley.dextranslator.Options;
 
 import javax.annotation.Nonnull;
@@ -17,7 +16,6 @@ import java.util.concurrent.Executors;
  * @author Matt Coley
  */
 public abstract class AbstractTask<T> {
-	protected static final Timing EMPTY_TIMING = Timing.empty();
 	protected final Options options;
 
 	/**
