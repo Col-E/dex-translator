@@ -7,15 +7,20 @@ import java.util.concurrent.Executors;
  * Basic thread pool utils.
  */
 public class ThreadPools {
+	private static ExecutorService sharedThreadPool;
+
 	/**
-	 * @return New fixed thread pool with max amount of threads recommended for the current system.
+	 * @return Shared fixed thread pool with max amount of threads recommended for the current system.
 	 */
-	public static ExecutorService newMaxFixedThreadPool() {
-		int nThreads = Runtime.getRuntime().availableProcessors() - 1;
-		return Executors.newFixedThreadPool(nThreads, r -> {
-			Thread t = new Thread(r);
-			t.setDaemon(true);
-			return t;
-		});
+	public static ExecutorService getMaxFixedThreadPool() {
+		if (sharedThreadPool == null) {
+			int nThreads = Runtime.getRuntime().availableProcessors() - 1;
+			sharedThreadPool = Executors.newFixedThreadPool(nThreads, r -> {
+				Thread t = new Thread(r);
+				t.setDaemon(true);
+				return t;
+			});
+		}
+		return sharedThreadPool;
 	}
 }

@@ -117,7 +117,7 @@ public class Conversion {
 		}
 
 		// Convert and store results in app-view.
-		ExecutorService threadPool = ThreadPools.newMaxFixedThreadPool();
+		ExecutorService threadPool = ThreadPools.getMaxFixedThreadPool();
 		try {
 			new PrimaryD8L8IRConverter(applicationView, EMPTY_TIMING)
 					.convert(applicationView, threadPool);
@@ -125,7 +125,6 @@ public class Conversion {
 			// Conversion process marks info as obsolete.
 			applicationView.appInfo().unsetObsolete();
 		} catch (Exception ex) {
-			threadPool.shutdownNow();
 			throw new ConversionD8ProcessingException(ex, options.isGeneratingClassFiles());
 		}
 		// Handle writing output
@@ -142,8 +141,6 @@ public class Conversion {
 			}
 		} catch (Exception ex) {
 			throw new ConversionExportException(ex, options.isGeneratingClassFiles());
-		} finally {
-			threadPool.shutdownNow();
 		}
 
 		return new ConversionResult(invalidMethods);
