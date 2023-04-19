@@ -26,17 +26,26 @@ import java.util.stream.Collectors;
 /**
  * Summary of loaded application data.
  *
- * @param inputApplication
- * 		Container holding input sources of program data and file resources.
- * 		This container is used to create the application model, and support the export process.
- * @param application
- * 		Container holding information about what is in the program.
- * 		This is the model of the {@code inputApplication}.
- *
  * @author Matt Coley
  */
-public record ApplicationData(@Nonnull AndroidApp inputApplication,
-							  @Nonnull DexApplication application) {
+public class ApplicationData {
+	private final AndroidApp inputApplication;
+	private final DexApplication application;
+
+	/**
+	 * @param inputApplication
+	 * 		Container holding input sources of program data and file resources.
+	 * 		This container is used to create the application model, and support the export process.
+	 * @param application
+	 * 		Container holding information about what is in the program.
+	 * 		This is the model of the {@code inputApplication}.
+	 */
+	public ApplicationData(@Nonnull AndroidApp inputApplication,
+						   @Nonnull DexApplication application) {
+		this.inputApplication = inputApplication;
+		this.application = application;
+	}
+
 	/**
 	 * @param inputs
 	 * 		Inputs to load from.
@@ -177,10 +186,28 @@ public record ApplicationData(@Nonnull AndroidApp inputApplication,
 
 	/**
 	 * @throws IOException
-	 * 		Closes class and resource providers within the {@link #inputApplication()}.
+	 * 		Closes class and resource providers within the {@link #getInputApplication()}.
 	 */
 	public void close() throws IOException {
 		inputApplication.signalFinishedToProviders(null);
+	}
+
+	/**
+	 * @return Container holding information about what is in the program.
+	 * This is the model of the {@link #getInputApplication()}.
+	 */
+	@Nonnull
+	public DexApplication getApplication() {
+		return application;
+	}
+
+	/**
+	 * @return Container holding input sources of program data and file resources.
+	 * This container is used to create the application model, and support the export process.
+	 */
+	@Nonnull
+	public AndroidApp getInputApplication() {
+		return inputApplication;
 	}
 
 	/**

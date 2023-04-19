@@ -188,8 +188,8 @@ public class Inputs {
 		 */
 		@Nullable
 		public Path getOriginPath() {
-			if (origin instanceof PathOrigin pathOrigin)
-				return pathOrigin.getPath();
+			if (origin instanceof PathOrigin)
+				return ((PathOrigin) origin).getPath();
 			return null;
 		}
 

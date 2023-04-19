@@ -140,7 +140,8 @@ public class IRCodeHacking {
 		@Override
 		public void buildInstruction(@Nonnull IRBuilder builder, int instructionIndex, boolean firstBlockInstruction) {
 			DexInstruction instruction = code.instructions[instructionIndex];
-			if (instruction instanceof DexFilledNewArray newArray) {
+			if (instruction instanceof DexFilledNewArray) {
+				DexFilledNewArray newArray = (DexFilledNewArray) instruction;
 				DexType type = newArray.getType();
 				String descriptor = type.descriptor.toString();
 				ValueTypeConstraint constraint =
@@ -207,7 +208,8 @@ public class IRCodeHacking {
 					throw new RuntimeException(t);
 				}
 				return;
-			} else if (instruction instanceof DexFilledNewArrayRange newArray) {
+			} else if (instruction instanceof DexFilledNewArrayRange) {
+				DexFilledNewArrayRange newArray = (DexFilledNewArrayRange) instruction;
 				DexType type = newArray.getType();
 				String descriptor = type.descriptor.toString();
 				ValueTypeConstraint constraint =
@@ -298,7 +300,7 @@ public class IRCodeHacking {
 					Unsafe unsafe = UnsafeUtil.getUnsafe();
 					short[] arrayData = data;
 					switch (element_width) {
-						case 1 -> {
+						case 1:
 							for (int i = 0; i < size; i++) {
 								builder.add(
 										new CfStackInstruction(CfStackInstruction.Opcode.Dup),
@@ -307,8 +309,8 @@ public class IRCodeHacking {
 										new CfArrayStore(type)
 								);
 							}
-						}
-						case 2 -> {
+							break;
+						case 2:
 							for (int i = 0; i < size; i++) {
 								builder.add(
 										new CfStackInstruction(CfStackInstruction.Opcode.Dup),
@@ -317,8 +319,8 @@ public class IRCodeHacking {
 										new CfArrayStore(type)
 								);
 							}
-						}
-						case 4 -> {
+							break;
+						case 4:
 							for (int i = 0; i < size; i++) {
 								builder.add(
 										new CfStackInstruction(CfStackInstruction.Opcode.Dup),
@@ -327,8 +329,8 @@ public class IRCodeHacking {
 										new CfArrayStore(type)
 								);
 							}
-						}
-						case 8 -> {
+							break;
+						case 8:
 							for (int i = 0; i < size; i++) {
 								builder.add(
 										new CfStackInstruction(CfStackInstruction.Opcode.Dup),
@@ -337,7 +339,7 @@ public class IRCodeHacking {
 										new CfArrayStore(type)
 								);
 							}
-						}
+							break;
 					}
 				}
 			};

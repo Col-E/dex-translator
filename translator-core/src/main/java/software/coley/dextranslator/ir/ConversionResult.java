@@ -2,7 +2,6 @@ package software.coley.dextranslator.ir;
 
 import com.android.tools.r8.graph.ProgramMethod;
 import software.coley.dextranslator.Options;
-import software.coley.dextranslator.task.ConverterTask;
 
 import javax.annotation.Nonnull;
 import java.util.List;
@@ -34,11 +33,37 @@ public class ConversionResult {
 	}
 
 	/**
-	 * @param method
-	 * 		Method definition.
-	 * @param exception
-	 * 		Exception with reason indicating why the method is invalid.
+	 * Outline of problematic methods in conversion.
 	 */
-	public record InvalidMethod(@Nonnull ProgramMethod method, @Nonnull Exception exception) {
+	public static class InvalidMethod {
+		private final ProgramMethod method;
+		private final Exception exception;
+
+		/**
+		 * @param method
+		 * 		Method definition.
+		 * @param exception
+		 * 		Exception with reason indicating why the method is invalid.
+		 */
+		public InvalidMethod(@Nonnull ProgramMethod method, @Nonnull Exception exception) {
+			this.method = method;
+			this.exception = exception;
+		}
+
+		/**
+		 * @return Method definition.
+		 */
+		@Nonnull
+		public ProgramMethod getMethod() {
+			return method;
+		}
+
+		/**
+		 * @return Exception with reason indicating why the method is invalid.
+		 */
+		@Nonnull
+		public Exception getException() {
+			return exception;
+		}
 	}
 }

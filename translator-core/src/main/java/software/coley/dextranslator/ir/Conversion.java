@@ -38,7 +38,7 @@ public class Conversion {
 	public static ConversionResult convert(@Nonnull ApplicationData applicationData,
 										   @Nonnull InternalOptions options, boolean replaceInvalid)
 			throws ConversionIRReplacementException, ConversionD8ProcessingException, ConversionExportException {
-		AndroidApp inputApplication = applicationData.inputApplication();
+		AndroidApp inputApplication = applicationData.getInputApplication();
 		AppView<AppInfo> applicationView = applicationData.createView(options);
 		DexApplication application = applicationView.app();
 
@@ -64,13 +64,17 @@ public class Conversion {
 				ProgramMethod programMethod = method.asProgramMethod(dexClass);
 				try {
 					BytecodeMetadataProvider metadataProvider = BytecodeMetadataProvider.empty();
-					if (options.isGeneratingClassFiles() && code instanceof DexCode dexCode) {
+					if (options.isGeneratingClassFiles() && code instanceof DexCode) {
+						DexCode dexCode = (DexCode) code;
+
 						// Dex --> Java
 						IRCode irCode = IRCodeHacking.buildIR(dexCode, programMethod, applicationView, Origin.root());
 						CfBuilder builder = new CfBuilder(applicationView, programMethod, irCode, metadataProvider);
 						CfCode cfCode = builder.build(deadCodeRemover, EMPTY_TIMING);
 						method.setCode(cfCode, EMPTY_ARRAY_MAP);
-					} else if (options.isGeneratingDex() && code instanceof CfCode cfCode) {
+					} else if (options.isGeneratingDex() && code instanceof CfCode) {
+						CfCode cfCode = (CfCode) code;
+
 						// Java --> Dex
 						List<CfCode.LocalVariableInfo> variables = cfCode.getLocalVariables();
 						CfSourceCode source = new CfSourceCode(cfCode, variables, programMethod, method.getReference(), null, Origin.root(), applicationView);
