@@ -12,6 +12,7 @@ import software.coley.dextranslator.ir.Conversion;
 import software.coley.dextranslator.ir.ConversionD8ProcessingException;
 import software.coley.dextranslator.ir.ConversionExportException;
 import software.coley.dextranslator.ir.ConversionIRReplacementException;
+import software.coley.dextranslator.util.ThreadPools;
 import software.coley.dextranslator.util.UnsafeUtil;
 import sun.misc.Unsafe;
 
@@ -65,7 +66,7 @@ public class ApplicationData {
 
 		// Allow D8 to access classes from the runtime.
 		// Required for de-sugaring and some optimization passes.
-		builder.addLibraryResourceProvider(JdkClassFileProvider.fromSystemJdk());
+		builder.addLibraryResourceProvider(systemJdkProvider());
 
 		// Load content from the inputs.
 		AndroidApp inputApplication = inputs.populate(builder).build();
@@ -73,7 +74,7 @@ public class ApplicationData {
 		// Read the application data from the loaded content.
 		try {
 			ApplicationReader applicationReader = new ApplicationReader(inputApplication, options, Timing.empty());
-			DexApplication application = applicationReader.read();
+			DexApplication application = applicationReader.read(ThreadPools.getMaxFixedThreadPool());
 			return new ApplicationData(inputApplication, application);
 		} finally {
 			// Close any internal archive providers now the application is fully processed.
@@ -218,10 +219,7 @@ public class ApplicationData {
 	 */
 	@Nonnull
 	private DexApplication copyApplication(@Nonnull InternalOptions options) {
-		DexApplication copy = application.builder().build();
-		if (options.isGeneratingDex())
-			copy = copy.toDirect(); // This operation is SLOW, but seems to be needed to compile back to DEX
-		return copy;
+		return application.builder().build();
 	}
 
 	/**
@@ -274,5 +272,21 @@ public class ApplicationData {
 						type.toSourceString() + "' as referenced in main-dex-list."));
 			}
 		}
+	}
+
+	private static volatile ClassFileResourceProvider systemJdkProvider;
+
+	private static ClassFileResourceProvider systemJdkProvider() throws IOException {
+		ClassFileResourceProvider systemJdkProvider = ApplicationData.systemJdkProvider;
+		if (systemJdkProvider == null) {
+			synchronized (ApplicationData.class) {
+				systemJdkProvider = ApplicationData.systemJdkProvider;
+				if (systemJdkProvider == null) {
+					systemJdkProvider = JdkClassFileProvider.fromSystemJdk();
+					ApplicationData.systemJdkProvider = systemJdkProvider;
+				}
+			}
+		}
+		return systemJdkProvider;
 	}
 }

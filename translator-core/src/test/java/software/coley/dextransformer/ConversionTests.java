@@ -50,7 +50,6 @@ public class ConversionTests {
 
 	@ParameterizedTest
 	@MethodSource("findJarResources")
-	@Disabled("incredibly slow")
 	void testJar2Dex(@Nonnull Path inputPath) {
 		// Wrap input
 		Inputs inputs = new Inputs()

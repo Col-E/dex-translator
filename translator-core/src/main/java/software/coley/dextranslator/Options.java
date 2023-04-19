@@ -31,6 +31,9 @@ public class Options {
 		// Currently we only support D8 usage.
 		// It does all the translation work we need, and we do not need any optimizer capabilities of R8.
 		options.tool = Marker.Tool.D8;
+
+		// We don't really need this one. Eats up ton of resources.
+		options.enableLoadStoreOptimization = false;
 	}
 
 	/**
