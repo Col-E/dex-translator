@@ -1,20 +1,18 @@
 package software.coley.dextranslator.ir;
 
 import com.android.tools.r8.ClassFileConsumer;
-import com.android.tools.r8.cf.CfRegisterAllocator;
 import com.android.tools.r8.cf.CfVersion;
-import com.android.tools.r8.cf.TypeVerificationHelper;
 import com.android.tools.r8.dex.ApplicationWriter;
 import com.android.tools.r8.dex.Marker;
 import com.android.tools.r8.errors.Unreachable;
 import com.android.tools.r8.graph.*;
 import com.android.tools.r8.graph.bytecodemetadata.BytecodeMetadataProvider;
 import com.android.tools.r8.ir.code.IRCode;
-import com.android.tools.r8.ir.conversion.*;
+import com.android.tools.r8.ir.conversion.CfBuilder;
+import com.android.tools.r8.ir.conversion.PrimaryD8L8IRConverter;
 import com.android.tools.r8.ir.desugar.desugaredlibrary.DesugaredLibraryAmender;
 import com.android.tools.r8.ir.optimize.CodeRewriter;
 import com.android.tools.r8.ir.optimize.DeadCodeRemover;
-import com.android.tools.r8.ir.regalloc.RegisterAllocator;
 import com.android.tools.r8.it.unimi.dsi.fastutil.ints.Int2ReferenceArrayMap;
 import com.android.tools.r8.jar.CfApplicationWriter;
 import com.android.tools.r8.origin.Origin;
@@ -30,10 +28,36 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 
+/**
+ * Conversion handling between DEX and JVM bytecode.
+ *
+ * @author Matt Coley
+ */
 public class Conversion {
 	private static final Int2ReferenceArrayMap<DebugLocalInfo> EMPTY_ARRAY_MAP = new Int2ReferenceArrayMap<>();
+	private static final BytecodeMetadataProvider EMPTY_METADATA = BytecodeMetadataProvider.empty();
 	protected static final Timing EMPTY_TIMING = Timing.empty();
 
+	/**
+	 * @param applicationData
+	 * 		Input application model.
+	 * @param options
+	 * 		Options to handle the conversion with.
+	 * @param replaceInvalid
+	 * 		Flag to indicate if invalid method bodies should be replaced with dummy {@code throw} statements.
+	 *
+	 * @return Result indicating conversion success and which methods got replaced if the replacement flag is set.
+	 * The actual conversion output is sent to {@link InternalOptions#programConsumer}.
+	 *
+	 * @throws ConversionIRReplacementException
+	 * 		When replacing {@link CfCode} of input classes fails.
+	 * @throws ConversionD8ProcessingException
+	 * 		When D8 conversion internals fails.
+	 * @throws ConversionExportException
+	 * 		When conversion exporting fails.
+	 * @see ApplicationData#exportToJvmClassMap()
+	 * @see ApplicationData#exportToDexFile()
+	 */
 	@Nonnull
 	public static ConversionResult convert(@Nonnull ApplicationData applicationData,
 										   @Nonnull InternalOptions options, boolean replaceInvalid)
@@ -63,32 +87,16 @@ public class Conversion {
 				Code code = method.getCode();
 				ProgramMethod programMethod = method.asProgramMethod(dexClass);
 				try {
-					BytecodeMetadataProvider metadataProvider = BytecodeMetadataProvider.empty();
+					// We only need to update the method code bodies if they're in Dalvik form.
+					// The D8 converter further below will cover all other cases.
 					if (options.isGeneratingClassFiles() && code instanceof DexCode) {
 						DexCode dexCode = (DexCode) code;
 
 						// Dex --> Java
 						IRCode irCode = IRCodeHacking.buildIR(dexCode, programMethod, applicationView, Origin.root());
-						CfBuilder builder = new CfBuilder(applicationView, programMethod, irCode, metadataProvider);
+						CfBuilder builder = new CfBuilder(applicationView, programMethod, irCode, EMPTY_METADATA);
 						CfCode cfCode = builder.build(deadCodeRemover, EMPTY_TIMING);
 						method.setCode(cfCode, EMPTY_ARRAY_MAP);
-					} else if (options.isGeneratingDex() && code instanceof CfCode) {
-						CfCode cfCode = (CfCode) code;
-
-						// Java --> Dex
-						List<CfCode.LocalVariableInfo> variables = cfCode.getLocalVariables();
-						CfSourceCode source = new CfSourceCode(cfCode, variables, programMethod, method.getReference(), null, Origin.root(), applicationView);
-						IRCode irCode = IRBuilder.create(programMethod, applicationView, source, Origin.root())
-								.build(programMethod, new MethodConversionOptions.MutableMethodConversionOptions(options));
-						RegisterAllocator registerAllocator = new CfRegisterAllocator(applicationView, irCode, new TypeVerificationHelper(applicationView, irCode));
-						DexBuilder builder = new DexBuilder(
-								irCode,
-								metadataProvider,
-								registerAllocator,
-								options
-						);
-						DexCode dexCode = builder.build();
-						method.setCode(dexCode, EMPTY_ARRAY_MAP);
 					}
 				} catch (Exception ex) {
 					// Generic error thrown by R8 when something in IR fails.
@@ -127,6 +135,7 @@ public class Conversion {
 		} catch (Exception ex) {
 			throw new ConversionD8ProcessingException(ex, options.isGeneratingClassFiles());
 		}
+
 		// Handle writing output
 		try {
 			Marker marker = options.getMarker();
