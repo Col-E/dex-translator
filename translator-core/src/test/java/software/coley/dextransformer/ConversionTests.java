@@ -1,6 +1,5 @@
 package software.coley.dextransformer;
 
-import com.android.tools.r8.D8;
 import com.android.tools.r8.utils.AndroidApiLevel;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -23,18 +22,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class ConversionTests {
-	static {
-		// There are a number of 'assert' statements through D8's code.
-		//
-		// A few in the exporting process fail such as 'DexString#getOffset' because
-		// the map storing string references uses an identity lookup, not equality.
-		//
-		// Others like 'IRBuilder#addInvokeRegisters' are really stupid.
-		// Any dex --> jar processing fails because it asserts the direction can only be jar --> dex.
-		D8.class.getClassLoader().setDefaultAssertionStatus(false);
-	}
-
+public class ConversionTests extends TestBase {
 	@ParameterizedTest
 	@MethodSource("findDexResources")
 	void testDex2Jar(@Nonnull Path inputPath) {
