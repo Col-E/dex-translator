@@ -17,6 +17,7 @@ import software.coley.dextranslator.util.UnsafeUtil;
 import sun.misc.Unsafe;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.HashMap;
@@ -31,7 +32,7 @@ import java.util.stream.Collectors;
  */
 public class ApplicationData {
 	private final AndroidApp inputApplication;
-	private final DexApplication application;
+	private DexApplication application;
 
 	/**
 	 * @param inputApplication
@@ -98,15 +99,6 @@ public class ApplicationData {
 				optionsForView.isGeneratingDexIndexed() ?
 						SyntheticItems.GlobalSyntheticsStrategy.forSingleOutputMode() :
 						SyntheticItems.GlobalSyntheticsStrategy.forPerFileMode();
-		if (optionsForView != applicationCopy.options) {
-			// Replace options if instances differ.
-			Unsafe unsafe = UnsafeUtil.getUnsafe();
-			UnsafeUtil.unchecked(() -> {
-				Field optionsField = DexApplication.class.getDeclaredField("options");
-				long optionsOffset = unsafe.objectFieldOffset(optionsField);
-				unsafe.getAndSetObject(applicationCopy, optionsOffset, optionsForView);
-			});
-		}
 
 		// Read main dex info, then wrap into info-model and finally the view.
 		MainDexInfo mainDexInfo = readMainDexInfoFrom(inputApplication, applicationCopy);
@@ -124,6 +116,7 @@ public class ApplicationData {
 	 * @throws ConversionExportException
 	 * 		When conversion exporting fails.
 	 */
+	@Nonnull
 	public Map<String, byte[]> exportToJvmClassMap() throws ConversionIRReplacementException,
 			ConversionD8ProcessingException, ConversionExportException {
 		Map<String, byte[]> result = new HashMap<>();
@@ -159,6 +152,7 @@ public class ApplicationData {
 	 * @throws ConversionExportException
 	 * 		When conversion exporting fails.
 	 */
+	@Nonnull
 	public byte[] exportToDexFile() throws ConversionIRReplacementException,
 			ConversionD8ProcessingException, ConversionExportException {
 		// Hack to allow passing the 'byte[]' output in the dex-output consumer to this local.
@@ -182,7 +176,74 @@ public class ApplicationData {
 
 		// Run conversion process, then yield results.
 		Conversion.convert(this, exportOptions.getInternalOptions(), false);
-		return result[0];
+		byte[] resultUnwrapped = result[0];
+		if (resultUnwrapped == null)
+			throw new ConversionExportException(new IllegalStateException("No DEX file was observed by consumer"), false);
+		return resultUnwrapped;
+	}
+
+	/**
+	 * Updates the {@link #getApplication()} to replace a prior entry of the given class,
+	 * with the new instance provided.
+	 *
+	 * @param updated
+	 * 		Updated class instance.
+	 *
+	 * @return Original class instance replaced. May be {@code null} if no class by the name existed previously.
+	 */
+	@Nullable
+	public DexProgramClass updateClass(@Nonnull DexProgramClass updated) {
+		return updateClass(updated.getTypeName(), updated);
+	}
+
+	/**
+	 * Updates the {@link #getApplication()} to replace a prior entry of the given class,
+	 * with the new instance provided.
+	 *
+	 * @param internalName
+	 * 		Internal name of type to update.
+	 * @param updatedClass
+	 * 		Updated class instance.
+	 *
+	 * @return Original class instance replaced. May be {@code null} if no class by the name existed previously.
+	 */
+	@Nullable
+	public DexProgramClass updateClass(@Nonnull String internalName, @Nonnull DexProgramClass updatedClass) {
+		// Track old class instance.
+		DexProgramClass originalClass = getClass(internalName);
+
+		// Update application reference to include the updated class.
+		application = application.builder()
+				.removeProgramClasses(pc -> pc.getTypeName().equals(internalName))
+				.addProgramClass(updatedClass)
+				.build();
+
+		return originalClass;
+	}
+
+	/**
+	 * Updates the {@link #getApplication()} to replace prior entries of the given classes,
+	 * with the new instances provided.
+	 *
+	 * @param updatedClasses
+	 * 		Map of class names, to updated class instances.
+	 *
+	 * @return Original class instances replaced. Values may be {@code null} if no class by the name existed previously.
+	 */
+	@Nonnull
+	public Map<String, DexProgramClass> updateClasses(@Nonnull Map<String, DexProgramClass> updatedClasses) {
+		// Track old class instances.
+		Map<String, DexProgramClass> originalClasses = new HashMap<>();
+		for (String typeName : updatedClasses.keySet())
+			originalClasses.put(typeName, getClass(typeName));
+
+		// Update application reference to include the updated class.
+		application = application.builder()
+				.removeProgramClasses(pc -> updatedClasses.containsKey(pc.getTypeName()))
+				.addProgramClasses(updatedClasses.values())
+				.build();
+
+		return originalClasses;
 	}
 
 	/**
@@ -212,14 +273,36 @@ public class ApplicationData {
 	}
 
 	/**
-	 * @param options
+	 * @param newOptions
 	 * 		Options providing context for the copy operation.
 	 *
 	 * @return Copy of application instance.
 	 */
 	@Nonnull
-	private DexApplication copyApplication(@Nonnull InternalOptions options) {
-		return application.builder().build();
+	private DexApplication copyApplication(@Nonnull InternalOptions newOptions) {
+		DexApplication applicationCopy = application.builder().build();
+		if (newOptions != applicationCopy.options) {
+			// Replace options if instances differ.
+			Unsafe unsafe = UnsafeUtil.getUnsafe();
+			UnsafeUtil.unchecked(() -> {
+				Field optionsField = DexApplication.class.getDeclaredField("options");
+				long optionsOffset = unsafe.objectFieldOffset(optionsField);
+				unsafe.getAndSetObject(applicationCopy, optionsOffset, newOptions);
+			});
+		}
+		return applicationCopy;
+	}
+
+	/**
+	 * @param internalName
+	 * 		Internal class name. For example {@code java/lang/String}.
+	 *
+	 * @return Program definition in the {@link #getApplication() application}.
+	 */
+	@Nullable
+	public DexProgramClass getClass(@Nonnull String internalName) {
+		DexType type = application.dexItemFactory().createType("L" + internalName + ";");
+		return application.programDefinitionFor(type);
 	}
 
 	/**
