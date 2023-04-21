@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
 import software.coley.dextranslator.Inputs;
 import software.coley.dextranslator.Options;
 import software.coley.dextranslator.model.ApplicationData;
@@ -40,9 +42,16 @@ public class ConversionTests {
 		// Read input
 		ApplicationData data = assertDoesNotThrow(() -> ApplicationData.from(inputs, options.getInternalOptions()));
 
-		// Write to DEX
+		// Write all the classes
 		Map<String, byte[]> classMap = assertDoesNotThrow(data::exportToJvmClassMap);
 		assertFalse(classMap.isEmpty(), "No classes in exported output for file: " + inputPath.getFileName());
+		for (byte[] classFile : classMap.values()) {
+			assertDoesNotThrow(() -> {
+				// Should validate the classes are well-formed enough
+				ClassWriter cw = new ClassWriter(0);
+				new ClassReader(classFile).accept(cw, 0);
+			});
+		}
 
 		// Close input
 		assertDoesNotThrow(data::close);
