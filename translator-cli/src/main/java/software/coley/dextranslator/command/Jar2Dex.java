@@ -1,28 +1,23 @@
 package software.coley.dextranslator.command;
 
-import com.android.tools.r8.graph.DexItemFactory;
-import com.android.tools.r8.shaking.ProguardConfiguration;
-import com.android.tools.r8.utils.Reporter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 import software.coley.dextranslator.Inputs;
 import software.coley.dextranslator.Options;
-import software.coley.dextranslator.util.proguard.AllClassNames;
 import software.coley.dextranslator.task.Converter;
 
 import java.io.File;
-import java.util.Collections;
 
 /**
- * Command to convert one or more JAR files to an APK file.
+ * Command to convert one or more JAR files to a DEX file.
  *
  * @author Matt Coley
  */
 @SuppressWarnings("unused")
-@Command(name = "j2apk",
-		description = "one or more JAR files to an APK file")
-public class Jar2Apk extends AbstractConversionCommand {
+@Command(name = "j2d",
+		description = "Convert one or more JAR files to an APK file")
+public class Jar2Dex extends AbstractConversionCommand {
 	@Parameters(index = "0",
 			description = "Path to one or more JAR files.",
 			arity = "1..*")
@@ -30,7 +25,7 @@ public class Jar2Apk extends AbstractConversionCommand {
 
 	@Option(names = {"-o", "--out"},
 			description = "Path to APK file to write to.",
-			defaultValue = "output.apk",
+			defaultValue = "output.dex",
 			required = true)
 	private File outputFile;
 
@@ -44,10 +39,6 @@ public class Jar2Apk extends AbstractConversionCommand {
 					"Invalid methods will be replaced with no-op behavior.")
 	private boolean replaceInvalid;
 
-	@Option(names = {"-r8"},
-			description = "Flag to enable usage of R8 over D8.")
-	private boolean r8;
-
 	@Override
 	public Void call() {
 		Inputs inputs = new Inputs();
@@ -57,8 +48,6 @@ public class Jar2Apk extends AbstractConversionCommand {
 		Options options = new Options()
 				.setReplaceInvalidMethodBodies(replaceInvalid)
 				.setLenient(lenient)
-				.setUseR8(r8)
-				.setProguardConfiguration(r8 ? newProguardConfig() : null)
 				.setDexFileOutput(outputFile.toPath());
 
 		new Converter()
@@ -107,30 +96,5 @@ public class Jar2Apk extends AbstractConversionCommand {
 	@Override
 	public void setReplaceInvalid(boolean replaceInvalid) {
 		this.replaceInvalid = replaceInvalid;
-	}
-
-	/**
-	 * @return Flag to use R8 over D8.
-	 */
-	public boolean isR8() {
-		return r8;
-	}
-
-	/**
-	 * @param r8
-	 * 		Flag to use R8 over D8.
-	 */
-	public void setR8(boolean r8) {
-		this.r8 = r8;
-	}
-
-	private static ProguardConfiguration newProguardConfig() {
-		ProguardConfiguration.Builder builder = ProguardConfiguration.builder(new DexItemFactory(), new Reporter());
-		builder.disableObfuscation();
-		builder.addDontNotePattern(AllClassNames.INSTANCE);
-		builder.addDontWarnPattern(AllClassNames.INSTANCE);
-		builder.addKeepAttributePatterns(Collections.singletonList("*"));
-		builder.setVerbose(true);
-		return builder.build();
 	}
 }

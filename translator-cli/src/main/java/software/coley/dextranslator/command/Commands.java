@@ -14,7 +14,7 @@ import java.util.concurrent.Callable;
 		description = "See the sub-commands for available operations",
 		version = DexTranslatorBuildConfig.VERSION,
 		mixinStandardHelpOptions = true,
-		subcommands = {Dex2Jar.class, Jar2Apk.class})
+		subcommands = {Dex2Jar.class, Jar2Dex.class})
 public class Commands implements Callable<Void> {
 	@Override
 	public Void call() throws Exception {

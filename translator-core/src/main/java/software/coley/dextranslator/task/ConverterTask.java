@@ -30,6 +30,7 @@ import java.util.function.Supplier;
  *     <li>{@link Options#setDexFileOutput(Path)}</li>
  *     <li>{@link Options#setDexDirectoryOutput(Path)}</li>
  *     <li>{@link Options#setDexOutput(DexIndexedConsumer)}</li>
+ *     <li>{@link Options#setApkWrappedDexFileOutput(Path)}</li>
  * </ul>
  *
  * @author Matt Coley

@@ -22,8 +22,8 @@ public abstract class AbstractConversionCommand implements Callable<Void> {
 			if (!invalidMethods.isEmpty()) {
 				System.out.println("Conversion process finished with " + invalidMethods.size() + " invalid methods:");
 				for (ConversionResult.InvalidMethod invalidMethod : invalidMethods) {
-					ProgramMethod method = invalidMethod.method();
-					String reason = invalidMethod.exception().getMessage();
+					ProgramMethod method = invalidMethod.getMethod();
+					String reason = invalidMethod.getException().getMessage();
 					System.out.println(" - " + method.getHolder().getTypeName() + "." +
 							method.getName() + method.getDefinition().descriptor() + " ==> " + reason);
 				}

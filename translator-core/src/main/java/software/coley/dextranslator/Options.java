@@ -1,14 +1,17 @@
 package software.coley.dextranslator;
 
-import com.android.tools.r8.ClassFileConsumer;
-import com.android.tools.r8.DexIndexedConsumer;
+import com.android.tools.r8.*;
 import com.android.tools.r8.dex.Marker;
 import com.android.tools.r8.graph.Code;
 import com.android.tools.r8.utils.AndroidApiLevel;
+import com.android.tools.r8.utils.ExceptionDiagnostic;
 import com.android.tools.r8.utils.InternalOptions;
 
 import javax.annotation.Nonnull;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Set;
 
 /**
  * Simple wrapper for managing D8/R8 options.
@@ -116,12 +119,36 @@ public class Options {
 
 	/**
 	 * @param path
+	 * 		Path to write the APK file output to.
+	 *
+	 * @return Self
+	 */
+	public Options setApkWrappedDexFileOutput(@Nonnull Path path) {
+		options.programConsumer = new DexIndexedConsumer.ArchiveConsumer(path);
+		return this;
+	}
+	/**
+	 * @param path
 	 * 		Path to write the Android dex file output to.
 	 *
 	 * @return Self
 	 */
 	public Options setDexFileOutput(@Nonnull Path path) {
-		options.programConsumer = new DexIndexedConsumer.ArchiveConsumer(path);
+		options.programConsumer = new DexIndexedConsumer() {
+			@Override
+			public void accept(int fileIndex, ByteDataView data, Set<String> descriptors, DiagnosticsHandler handler) {
+				try {
+					Files.write(path, data.copyByteData());
+				} catch (IOException ex) {
+					handler.error(new ExceptionDiagnostic(ex));
+				}
+			}
+
+			@Override
+			public void finished(DiagnosticsHandler handler) {
+				// no-op
+			}
+		};
 		return this;
 	}
 

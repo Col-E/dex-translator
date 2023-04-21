@@ -16,7 +16,7 @@ import java.io.File;
  */
 @SuppressWarnings("unused")
 @Command(name = "d2j",
-		description = "one or more DEX files to a JAR file")
+		description = "Convert one or more DEX files to a JAR file")
 public class Dex2Jar extends AbstractConversionCommand {
 	@Parameters(index = "0",
 			description = "Path to one or more DEX files.",
