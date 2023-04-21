@@ -5,12 +5,9 @@ plugins {
 }
 
 dependencies {
-    dependencies {
-        api fileTree(dir: "../libs", include: ['*.jar'])
-    }
     api 'com.google.code.findbugs:jsr305:3.0.2'
-    api 'org.ow2.asm:asm:9.5'
 
+    testImplementation 'org.ow2.asm:asm:9.5'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testImplementation 'org.junit.jupiter:junit-jupiter-params:5.8.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
@@ -45,4 +42,40 @@ test {
     systemProperty 'junit.jupiter.execution.parallel.config.strategy', 'fixed'
     systemProperty 'junit.jupiter.execution.parallel.config.fixed.parallelism', 3
     systemProperty 'junit.jupiter.execution.parallel.config.fixed.max-pool-size', 3
+}
+
+// Configure publishing for generation of 'pom.xml'
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = project.group
+            version = project.version
+            artifactId = "dex-translator"
+
+            from components.java
+        }
+    }
+}
+
+// Hack to generate POM files for the output.
+tasks.named("generatePomFileForMavenPublication").configure {
+    def pomXml = 'build/classes/java/main/META-INF/maven/software.coley/dex-translator/pom.xml'
+    def pomProp = 'build/classes/java/main/META-INF/maven/software.coley/dex-translator/pom.properties'
+    destination = project.file(pomXml)
+
+    // Hack to also generate the pom-properties file.
+    doLast {
+        List<String> sample = [
+                "# Generated",
+                "groupId=software.coley",
+                "artifactId=dex-translator",
+                "version=${project.version}"
+        ] as String[]
+        new File(pomProp).text = sample.join ("\n")
+    }
+}
+
+// Make it so that shadowJar requires generating POM files first.
+tasks.named("shadowJar") {
+    dependsOn(tasks.named("generatePomFileForMavenPublication"))
 }
