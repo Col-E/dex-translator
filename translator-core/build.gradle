@@ -8,9 +8,8 @@ dependencies {
     dependencies {
         api fileTree(dir: "../libs", include: ['*.jar'])
     }
-
+    api 'com.google.code.findbugs:jsr305:3.0.2'
     api 'org.ow2.asm:asm:9.5'
-    api 'com.google.guava:guava:31.1-jre'
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testImplementation 'org.junit.jupiter:junit-jupiter-params:5.8.1'
