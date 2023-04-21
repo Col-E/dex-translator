@@ -13,6 +13,7 @@ import software.coley.dextranslator.model.ApplicationData;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -106,7 +107,7 @@ public class ConversionTests {
 	@Nullable
 	private static FailureType getKnownFailureType(@Nonnull Path path, boolean isDex2Jar) {
 		String fullPath = path.toAbsolutePath().toString();
-		String dxSamplesDir = "/dx-samples/";
+		String dxSamplesDir = File.separator + "dx-samples" + File.separator;
 		if (fullPath.contains(dxSamplesDir)) {
 			int start = fullPath.indexOf(dxSamplesDir) + dxSamplesDir.length();
 			int caseId = Integer.parseInt(fullPath.substring(start, start + 3));
