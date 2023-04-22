@@ -2,12 +2,16 @@ plugins {
     id 'java-library'
     id 'maven-publish'
     id "com.peterabeles.gversion" version "1.10"
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
 }
 
 dependencies {
+    api 'com.android.tools:r8:8.2.2'
     api 'com.google.code.findbugs:jsr305:3.0.2'
+    api 'it.unimi.dsi:fastutil:8.5.1'
+    api 'com.google.guava:guava:31.1-jre'
+    api 'org.ow2.asm:asm:9.5'
 
-    testImplementation 'org.ow2.asm:asm:9.5'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testImplementation 'org.junit.jupiter:junit-jupiter-params:5.8.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
@@ -59,23 +63,50 @@ publishing {
 
 // Hack to generate POM files for the output.
 tasks.named("generatePomFileForMavenPublication").configure {
-    def pomXml = 'build/classes/java/main/META-INF/maven/software.coley/dex-translator/pom.xml'
-    def pomProp = 'build/classes/java/main/META-INF/maven/software.coley/dex-translator/pom.properties'
-    destination = project.file(pomXml)
+    destination = project.file('build/classes/java/main/META-INF/maven/software.coley/dex-translator/pom.xml')
+    def properties = project.file('build/classes/java/main/META-INF/maven/software.coley/dex-translator/pom.properties')
 
     // Hack to also generate the pom-properties file.
     doLast {
-        List<String> sample = [
+        List<String> lines = [
                 "# Generated",
                 "groupId=software.coley",
                 "artifactId=dex-translator",
                 "version=${project.version}"
         ] as String[]
-        new File(pomProp).text = sample.join ("\n")
+        properties.text = lines.join('\n')
     }
 }
 
 // Make it so that shadowJar requires generating POM files first.
 tasks.named("shadowJar") {
     dependsOn(tasks.named("generatePomFileForMavenPublication"))
+}
+
+// Configure shadow to include only:
+//  - our code
+//  - shaded/minified r8
+shadowJar {
+    dependencies {
+        exclude "com/google/**"
+        exclude "it/**"
+        exclude "javax/**"
+        exclude "joptsimple/**"
+        exclude "kotlin/**"
+        exclude "kotlinx/**"
+        exclude "org/**"
+    }
+
+    minimize {
+        exclude('**/*.java',
+                '**/package-info.class',
+                'module-info.class'
+        )
+    }
+
+    // Clearly indicate we are shading R8 content
+    relocate 'com.android.tools.r8', 'shade.r8'
+
+    // Remove the classifier suffix.
+    archiveClassifier.set('')
 }

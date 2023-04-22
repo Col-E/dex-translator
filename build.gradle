@@ -1,7 +1,3 @@
-plugins {
-    id 'com.github.johnrengelman.shadow' version '7.1.2' apply false
-}
-
 allprojects {
     group 'software.coley'
     version '1.0.0'
@@ -9,7 +5,6 @@ allprojects {
 
 subprojects {
     apply plugin: 'java'
-    apply plugin: 'com.github.johnrengelman.shadow'
 
     repositories {
         mavenLocal()
@@ -22,39 +17,6 @@ subprojects {
         }
     }
 
-    // "Why don't you just put this in core?"
-    //
-    // I know, this looks really stupid. But hear me out. The R8 dependency needs to be handled as implementation
-    // so that we can use shadowJar's minimize capability. Declaring it in core as API prevents proper minification
-    // during core:shadowJar.
-    //
-    // "Why are you shadowing core though?"
-    //
-    // Because we cannot publish Google's own R8 artifacts in our BOM. That sounds ridiculous, but its the sad reality.
-    // The official R8 binaries are obfuscated to save on file size and are not on Maven central anyways.
-    // It sucks, so the best we can do to allow our library to be consumed easily is repackage it ourselves.
-    plugins.withType(JavaPlugin).configureEach {
-        dependencies {
-            implementation fileTree(dir: "libs", include: ['*.jar'])
-        }
-    }
-
-    // See comment above for why this exists.
-    shadowJar {
-        minimize {
-            exclude('**/*.java',
-                    '**/package-info.class',
-                    'module-info.class',
-                    'javax/annotation/**' // Don't shadow this, rely on BOM for library consumers to pull in the artifact
-            )
-        }
-
-        // Clearly indicate we are shading R8 content
-        relocate 'com.android.tools.r8', 'shade.r8'
-
-        // Remove the classifier suffix.
-        // This makes it so that we only have 1 JAR file in the build directories.
-        // That JAR containing our code and shaded R8.
-        archiveClassifier.set('')
-    }
+    // We will be using shadowJar, so no need to run the jar task.
+    tasks.jar.enabled = false
 }

@@ -1,10 +1,10 @@
 package software.coley.dextransformer;
 
-import com.android.tools.r8.com.google.common.collect.Iterables;
 import com.android.tools.r8.graph.Code;
 import com.android.tools.r8.graph.DexEncodedMethod;
 import com.android.tools.r8.graph.DexProgramClass;
 import com.android.tools.r8.utils.AndroidApiLevel;
+import com.google.common.collect.Iterables;
 import org.junit.jupiter.api.Test;
 import software.coley.dextranslator.Inputs;
 import software.coley.dextranslator.Options;

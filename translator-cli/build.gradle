@@ -1,5 +1,6 @@
 plugins {
     id 'application'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
 }
 
 dependencies {
@@ -9,4 +10,21 @@ dependencies {
 
 application {
     getMainClass().set('software.coley.dextranslator.Main')
+}
+
+// TODO: Due to classpath setup, shadowJar is not minifying in this CLI module.
+//   We should instead create a standard fatJar, then use proguard+shrinking on it
+shadowJar {
+    minimize {
+        exclude('**/*.java',
+                '**/package-info.class',
+                'module-info.class'
+        )
+    }
+
+    // Clearly indicate we are shading R8 content
+    relocate 'com.android.tools.r8', 'shade.r8'
+
+    // Remove the classifier suffix.
+    archiveClassifier.set('')
 }

@@ -13,13 +13,13 @@ import com.android.tools.r8.ir.conversion.PrimaryD8L8IRConverter;
 import com.android.tools.r8.ir.desugar.desugaredlibrary.DesugaredLibraryAmender;
 import com.android.tools.r8.ir.optimize.CodeRewriter;
 import com.android.tools.r8.ir.optimize.DeadCodeRemover;
-import com.android.tools.r8.it.unimi.dsi.fastutil.ints.Int2ReferenceArrayMap;
 import com.android.tools.r8.jar.CfApplicationWriter;
 import com.android.tools.r8.origin.Origin;
 import com.android.tools.r8.synthesis.SyntheticItems;
 import com.android.tools.r8.utils.AndroidApp;
 import com.android.tools.r8.utils.InternalOptions;
 import com.android.tools.r8.utils.Timing;
+import it.unimi.dsi.fastutil.ints.Int2ReferenceArrayMap;
 import software.coley.dextranslator.model.ApplicationData;
 import software.coley.dextranslator.util.ThreadPools;
 
