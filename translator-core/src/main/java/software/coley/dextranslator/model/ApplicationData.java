@@ -214,7 +214,7 @@ public class ApplicationData {
 
 		// Update application reference to include the updated class.
 		application = application.builder()
-				.removeProgramClasses(pc -> pc.getTypeName().equals(internalName))
+				.removeProgramClass(internalName)
 				.addProgramClass(updatedClass)
 				.build();
 
@@ -239,7 +239,7 @@ public class ApplicationData {
 
 		// Update application reference to include the updated class.
 		application = application.builder()
-				.removeProgramClasses(pc -> updatedClasses.containsKey(pc.getTypeName()))
+				.removeProgramClasses(updatedClasses.keySet())
 				.addProgramClasses(updatedClasses.values())
 				.build();
 
@@ -280,16 +280,9 @@ public class ApplicationData {
 	 */
 	@Nonnull
 	private DexApplication copyApplication(@Nonnull InternalOptions newOptions) {
-		DexApplication applicationCopy = application.builder().build();
-		if (newOptions != applicationCopy.options) {
-			// Replace options if instances differ.
-			Unsafe unsafe = UnsafeUtil.getUnsafe();
-			UnsafeUtil.unchecked(() -> {
-				Field optionsField = DexApplication.class.getDeclaredField("options");
-				long optionsOffset = unsafe.objectFieldOffset(optionsField);
-				unsafe.getAndSetObject(applicationCopy, optionsOffset, newOptions);
-			});
-		}
+		DexApplication applicationCopy = application.copy();
+		if (newOptions != applicationCopy.options)
+			applicationCopy.options = newOptions;
 		return applicationCopy;
 	}
 
