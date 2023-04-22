@@ -16,7 +16,7 @@ import java.io.File;
  */
 @SuppressWarnings("unused")
 @Command(name = "j2d",
-		description = "Convert one or more JAR files to an APK file")
+		description = "Convert one or more JAR files to an DEX file")
 public class Jar2Dex extends AbstractConversionCommand {
 	@Parameters(index = "0",
 			description = "Path to one or more JAR files.",
@@ -24,7 +24,7 @@ public class Jar2Dex extends AbstractConversionCommand {
 	private File[] inputFiles;
 
 	@Option(names = {"-o", "--out"},
-			description = "Path to APK file to write to.",
+			description = "Path to DEX file to write to.",
 			defaultValue = "output.dex",
 			required = true)
 	private File outputFile;
