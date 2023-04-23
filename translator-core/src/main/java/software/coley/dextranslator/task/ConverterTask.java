@@ -2,6 +2,7 @@ package software.coley.dextranslator.task;
 
 import com.android.tools.r8.ClassFileConsumer;
 import com.android.tools.r8.DexIndexedConsumer;
+import com.android.tools.r8.utils.ClassFilter;
 import software.coley.dextranslator.Options;
 import software.coley.dextranslator.ir.Conversion;
 import software.coley.dextranslator.ir.ConversionException;
@@ -54,7 +55,7 @@ public class ConverterTask extends AbstractTask<ConversionResult> {
 		try {
 			ApplicationData data = dataSupplier.get();
 			boolean replaceInvalid = options.isReplaceInvalidMethodBodies();
-			ConversionResult result = Conversion.convert(data, options.getInternalOptions(), replaceInvalid);
+			ConversionResult result = Conversion.convert(data, options.getInternalOptions(), ClassFilter.PASS_ALL, replaceInvalid);
 			return future.complete(result);
 		} catch (ConversionException ex) {
 			return future.completeExceptionally(ex);

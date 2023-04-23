@@ -13,13 +13,10 @@ import software.coley.dextranslator.ir.ConversionD8ProcessingException;
 import software.coley.dextranslator.ir.ConversionExportException;
 import software.coley.dextranslator.ir.ConversionIRReplacementException;
 import software.coley.dextranslator.util.ThreadPools;
-import software.coley.dextranslator.util.UnsafeUtil;
-import sun.misc.Unsafe;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -86,11 +83,15 @@ public class ApplicationData {
 	/**
 	 * @param optionsForView
 	 * 		New options to utilize for the created {@link AppView}.
+	 * @param filter
+	 * 		Class filter to apply, used for limiting the visibility to classes within the view.
+	 * 		This can be useful when the view is used in a conversion process where only some classes
+	 * 		are to be converted, rather than the whole application.
 	 *
 	 * @return View of the application.
 	 */
 	@Nonnull
-	public AppView<AppInfo> createView(@Nonnull InternalOptions optionsForView) {
+	public AppView<AppInfo> createView(@Nonnull InternalOptions optionsForView, @Nonnull ClassFilter filter) {
 		// Create a shallow-copy of the operation modifications do not affect the original copy held by our class.
 		DexApplication applicationCopy = copyApplication(optionsForView);
 
@@ -103,7 +104,31 @@ public class ApplicationData {
 		// Read main dex info, then wrap into info-model and finally the view.
 		MainDexInfo mainDexInfo = readMainDexInfoFrom(inputApplication, applicationCopy);
 		AppInfo info = AppInfo.createInitialAppInfo(applicationCopy, syntheticsStrategy, mainDexInfo);
+
+		// Assign filter to app-info.
+		// This limits the ability of anything operating on the view/info to access classes not matched by the filter.
+		// If we only want to convert/export a few classes this filter will allow us to do that.
+		info.setFilter(filter);
+
+		// Wrap in view
 		return AppView.createForD8(info);
+	}
+
+	/**
+	 * @return JVM bytecode of the requested class.
+	 * If the class is not found in the application, will be {@code null}.
+	 *
+	 * @throws ConversionIRReplacementException
+	 * 		When replacing {@link CfCode} of input classes fails.
+	 * @throws ConversionD8ProcessingException
+	 * 		When D8 conversion internals fails.
+	 * @throws ConversionExportException
+	 * 		When conversion exporting fails.
+	 */
+	@Nullable
+	public byte[] exportToJvmClass(@Nonnull String internalName) throws ConversionIRReplacementException,
+			ConversionD8ProcessingException, ConversionExportException {
+		return exportToJvmClassMap(ClassFilter.forType(internalName)).get(internalName);
 	}
 
 	/**
@@ -118,6 +143,25 @@ public class ApplicationData {
 	 */
 	@Nonnull
 	public Map<String, byte[]> exportToJvmClassMap() throws ConversionIRReplacementException,
+			ConversionD8ProcessingException, ConversionExportException {
+		return exportToJvmClassMap(ClassFilter.PASS_ALL);
+	}
+
+	/**
+	 * @param filter
+	 * 		Filter to limit which classes are exported.
+	 *
+	 * @return Map of internal class names to JVM bytecode of classes.
+	 *
+	 * @throws ConversionIRReplacementException
+	 * 		When replacing {@link CfCode} of input classes fails.
+	 * @throws ConversionD8ProcessingException
+	 * 		When D8 conversion internals fails.
+	 * @throws ConversionExportException
+	 * 		When conversion exporting fails.
+	 */
+	@Nonnull
+	public Map<String, byte[]> exportToJvmClassMap(@Nonnull ClassFilter filter) throws ConversionIRReplacementException,
 			ConversionD8ProcessingException, ConversionExportException {
 		Map<String, byte[]> result = new HashMap<>();
 
@@ -138,7 +182,7 @@ public class ApplicationData {
 		});
 
 		// Run conversion process, then yield results.
-		Conversion.convert(this, exportOptions.getInternalOptions(), false);
+		Conversion.convert(this, exportOptions.getInternalOptions(), filter, false);
 		return result;
 	}
 
@@ -175,7 +219,7 @@ public class ApplicationData {
 		});
 
 		// Run conversion process, then yield results.
-		Conversion.convert(this, exportOptions.getInternalOptions(), false);
+		Conversion.convert(this, exportOptions.getInternalOptions(), ClassFilter.PASS_ALL, false);
 		byte[] resultUnwrapped = result[0];
 		if (resultUnwrapped == null)
 			throw new ConversionExportException(new IllegalStateException("No DEX file was observed by consumer"), false);

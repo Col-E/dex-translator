@@ -17,6 +17,7 @@ import com.android.tools.r8.jar.CfApplicationWriter;
 import com.android.tools.r8.origin.Origin;
 import com.android.tools.r8.synthesis.SyntheticItems;
 import com.android.tools.r8.utils.AndroidApp;
+import com.android.tools.r8.utils.ClassFilter;
 import com.android.tools.r8.utils.InternalOptions;
 import com.android.tools.r8.utils.Timing;
 import it.unimi.dsi.fastutil.ints.Int2ReferenceArrayMap;
@@ -43,6 +44,10 @@ public class Conversion {
 	 * 		Input application model.
 	 * @param options
 	 * 		Options to handle the conversion with.
+	 * @param filter
+	 * 		Class filter to apply, used for limiting the visibility to classes within the view.
+	 * 		This can be useful when the view is used in a conversion process where only some classes
+	 * 		are to be converted, rather than the whole application.
 	 * @param replaceInvalid
 	 * 		Flag to indicate if invalid method bodies should be replaced with dummy {@code throw} statements.
 	 *
@@ -60,11 +65,12 @@ public class Conversion {
 	 */
 	@Nonnull
 	public static ConversionResult convert(@Nonnull ApplicationData applicationData,
-										   @Nonnull InternalOptions options, boolean replaceInvalid)
+										   @Nonnull InternalOptions options,
+										   @Nonnull ClassFilter filter,
+										   boolean replaceInvalid)
 			throws ConversionIRReplacementException, ConversionD8ProcessingException, ConversionExportException {
 		AndroidApp inputApplication = applicationData.getInputApplication();
-		AppView<AppInfo> applicationView = applicationData.createView(options);
-		DexApplication application = applicationView.app();
+		AppView<AppInfo> applicationView = applicationData.createView(options, filter);
 
 		// Run pre-processing operations.
 		DesugaredLibraryAmender.run(applicationView);
@@ -76,7 +82,7 @@ public class Conversion {
 		// Handle rewriting input code models to the target code model type.
 		CodeRewriter codeRewriter = new CodeRewriter(applicationView);
 		DeadCodeRemover deadCodeRemover = new DeadCodeRemover(applicationView, codeRewriter);
-		for (DexProgramClass dexClass : application.classes()) {
+		for (DexProgramClass dexClass : applicationView.appInfo().classes()) {
 			// In some configurations, having this be null causes problems.
 			// Setting it to any version resolves the problem.
 			if (dexClass.getInitialClassFileVersion() == null)

@@ -39,7 +39,7 @@ public class ConversionTests extends TestBase {
 		ApplicationData data = assertDoesNotThrow(() -> ApplicationData.from(inputs, options.getInternalOptions()));
 
 		// Write all the classes
-		Map<String, byte[]> classMap = assertDoesNotThrow(data::exportToJvmClassMap);
+		Map<String, byte[]> classMap = assertDoesNotThrow(() -> data.exportToJvmClassMap());
 		assertFalse(classMap.isEmpty(), "No classes in exported output for file: " + inputPath.getFileName());
 		for (byte[] classFile : classMap.values()) {
 			assertDoesNotThrow(() -> {
