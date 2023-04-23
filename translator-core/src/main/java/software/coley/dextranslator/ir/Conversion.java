@@ -22,6 +22,7 @@ import com.android.tools.r8.utils.InternalOptions;
 import com.android.tools.r8.utils.Timing;
 import it.unimi.dsi.fastutil.ints.Int2ReferenceArrayMap;
 import software.coley.dextranslator.model.ApplicationData;
+import software.coley.dextranslator.resugar.TryCatchResugaring;
 import software.coley.dextranslator.util.ThreadPools;
 
 import javax.annotation.Nonnull;
@@ -80,6 +81,7 @@ public class Conversion {
 		List<ConversionResult.InvalidMethod> invalidMethods = new ArrayList<>();
 
 		// Handle rewriting input code models to the target code model type.
+		boolean isJvmTarget = options.isGeneratingClassFiles();
 		CodeRewriter codeRewriter = new CodeRewriter(applicationView);
 		DeadCodeRemover deadCodeRemover = new DeadCodeRemover(applicationView, codeRewriter);
 		for (DexProgramClass dexClass : applicationView.appInfo().classes()) {
@@ -95,13 +97,20 @@ public class Conversion {
 				try {
 					// We only need to update the method code bodies if they're in Dalvik form.
 					// The D8 converter further below will cover all other cases.
-					if (options.isGeneratingClassFiles() && code instanceof DexCode) {
+					if (isJvmTarget && code instanceof DexCode) {
 						DexCode dexCode = (DexCode) code;
 
 						// Dex --> Java
 						IRCode irCode = IRCodeHacking.buildIR(dexCode, programMethod, applicationView, Origin.root());
+
+						// Build CF model.
 						CfBuilder builder = new CfBuilder(applicationView, programMethod, irCode, EMPTY_METADATA);
 						CfCode cfCode = builder.build(deadCodeRemover, EMPTY_TIMING);
+
+						// Apply re-sugaring processors.
+						TryCatchResugaring.mergeTryCatchBlocks(cfCode);
+
+						// Update method.
 						method.setCode(cfCode, EMPTY_ARRAY_MAP);
 					}
 				} catch (Exception ex) {
@@ -124,7 +133,7 @@ public class Conversion {
 						method.setCode(ThrowNullCode.get(), EMPTY_ARRAY_MAP);
 						invalidMethods.add(new ConversionResult.InvalidMethod(programMethod, ex));
 					} else {
-						throw new ConversionIRReplacementException(ex, programMethod, options.isGeneratingClassFiles());
+						throw new ConversionIRReplacementException(ex, programMethod, isJvmTarget);
 					}
 				}
 			}
