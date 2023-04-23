@@ -11,8 +11,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class LimitedConversionTests extends TestBase {
 	@Test
@@ -40,10 +39,12 @@ public class LimitedConversionTests extends TestBase {
 		// Export with one class visible
 		exported = assertDoesNotThrow(() -> data.exportToJvmClassMap(ClassFilter.forType("Base")));
 		assertEquals(1, exported.size());
+		assertArrayEquals(exported.get("Base"), assertDoesNotThrow(() -> data.exportToJvmClass("Base")));
 
 		// Export with one class visible, but it references another class in the application model
 		//  - Should still work
 		exported = assertDoesNotThrow(() -> data.exportToJvmClassMap(ClassFilter.forType("BaseOkay")));
 		assertEquals(1, exported.size());
+		assertArrayEquals(exported.get("BaseOkay"), assertDoesNotThrow(() -> data.exportToJvmClass("BaseOkay")));
 	}
 }
