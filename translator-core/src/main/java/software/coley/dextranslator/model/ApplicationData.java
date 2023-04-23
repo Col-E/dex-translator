@@ -18,6 +18,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -27,6 +28,7 @@ import java.util.stream.Collectors;
  */
 public class ApplicationData {
 	private final AndroidApp inputApplication;
+	private Supplier<Options> operationOptionsProvider = Options::new;
 	private DexApplication application;
 
 	/**
@@ -79,6 +81,22 @@ public class ApplicationData {
 	}
 
 	/**
+	 * @param dexFile
+	 * 		DEX file content to read.
+	 *
+	 * @return Application data of the content.
+	 *
+	 * @throws IOException
+	 * 		When content could not be read from the inputs.
+	 */
+	@Nonnull
+	public static ApplicationData fromDex(@Nonnull byte[] dexFile) throws IOException {
+		InternalOptions options = new Options().getInternalOptions();
+		Inputs inputs = new Inputs().addDex(dexFile);
+		return from(inputs, options);
+	}
+
+	/**
 	 * @param classFile
 	 * 		Bytecode of class to read.
 	 *
@@ -89,7 +107,7 @@ public class ApplicationData {
 	 */
 	@Nonnull
 	public static ApplicationData fromClass(@Nonnull byte[] classFile) throws IOException {
-		InternalOptions options = new Options().setLenient(true).getInternalOptions();
+		InternalOptions options = new Options().getInternalOptions();
 		Inputs inputs = new Inputs().addJvmClass(classFile);
 		return from(inputs, options);
 	}
@@ -196,8 +214,7 @@ public class ApplicationData {
 		Map<String, byte[]> result = new HashMap<>();
 
 		// Our temporary options to dictate exporting to JVM class files.
-		Options exportOptions = new Options();
-		exportOptions.setLenient(true);
+		Options exportOptions = operationOptionsProvider.get();
 		exportOptions.setJvmOutput(new ClassFileConsumer() {
 			@Override
 			public void accept(ByteDataView data, String descriptor, DiagnosticsHandler handler) {
@@ -233,9 +250,8 @@ public class ApplicationData {
 		byte[][] result = {null};
 
 		// Our temporary options to dictate exporting to a DEX file.
-		Options exportOptions = new Options();
+		Options exportOptions = operationOptionsProvider.get();
 		exportOptions.setApiLevel(application.options.getMinApiLevel());
-		exportOptions.setLenient(true);
 		exportOptions.setDexOutput(new DexIndexedConsumer() {
 			@Override
 			public void accept(int fileIndex, ByteDataView data, Set<String> descriptors, DiagnosticsHandler handler) {
@@ -397,6 +413,16 @@ public class ApplicationData {
 	public DexProgramClass getClass(@Nonnull String internalName) {
 		DexType type = application.dexItemFactory().createType("L" + internalName + ";");
 		return application.programDefinitionFor(type);
+	}
+
+	/**
+	 * @param operationOptionsProvider
+	 * 		Provider to supply an {@link Options} instance for export operations.
+	 * 		For exporting to JVM bytecode for instance you may want to supply an
+	 * 		options configured with {@link Options#enableLoadStoreOptimization()}.
+	 */
+	public void setOperationOptionsProvider(Supplier<Options> operationOptionsProvider) {
+		this.operationOptionsProvider = operationOptionsProvider;
 	}
 
 	/**
