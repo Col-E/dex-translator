@@ -55,26 +55,26 @@ public class IRCodeHacking {
 	static void swap(@Nonnull CfBuilder builder, int right, int left) {
 		if (right == 1) {
 			if (left == 1) {
-				builder.add(new CfStackInstruction(CfStackInstruction.Opcode.Swap));
+				builder.add(CfStackInstruction.SWAP);
 				return;
 			} else if (left == 2) {
 				builder.add(
-						new CfStackInstruction(CfStackInstruction.Opcode.DupX2),
-						new CfStackInstruction(CfStackInstruction.Opcode.Pop)
+						CfStackInstruction.DUP_X2,
+						CfStackInstruction.POP
 				);
 				return;
 			}
 		} else if (right == 2) {
 			if (left == 1) {
 				builder.add(
-						new CfStackInstruction(CfStackInstruction.Opcode.Dup2X1),
-						new CfStackInstruction(CfStackInstruction.Opcode.Pop2)
+						CfStackInstruction.DUP2_X1,
+						CfStackInstruction.POP2
 				);
 				return;
 			} else if (left == 2) {
 				builder.add(
-						new CfStackInstruction(CfStackInstruction.Opcode.Dup2X2),
-						new CfStackInstruction(CfStackInstruction.Opcode.Pop2)
+						CfStackInstruction.DUP2_X2,
+						CfStackInstruction.POP2
 				);
 				return;
 			}
@@ -176,7 +176,7 @@ public class IRCodeHacking {
 					@Override
 					public void buildCf(CfBuilder builder) {
 						builder.add(
-								new CfConstNumber(argumentCount, ValueType.INT),
+								CfConstNumber.constNumber(argumentCount, ValueType.INT),
 								new CfNewArray(type)
 						);
 						MemberType memberType = getArrayMemberType(descriptor);
@@ -187,11 +187,9 @@ public class IRCodeHacking {
 							// to [array, array, index, element]
 
 							// [element, array]
-							builder.add(
-									new CfStackInstruction(CfStackInstruction.Opcode.Dup)
-							);  // [element, array, array]
+							builder.add(CfStackInstruction.DUP); // [element, array, array]
 							swap(builder, 2, wordSize); // [array, array, element]
-							builder.add(new CfConstNumber(index++, ValueType.INT)); // [array, array, element, index]
+							builder.add(CfConstNumber.constNumber(index++, ValueType.INT)); // [array, array, element, index]
 							swap(builder, 1, wordSize); // [array, array, index, element]
 							builder.add(new CfArrayStore(memberType)); // [element?, array]
 							registerIndex += wordSize;
@@ -238,7 +236,7 @@ public class IRCodeHacking {
 					@Override
 					public void buildCf(CfBuilder builder) {
 						builder.add(
-								new CfConstNumber(argumentCount, ValueType.INT),
+								CfConstNumber.constNumber(argumentCount, ValueType.INT),
 								new CfNewArray(type)
 						);
 						MemberType memberType = getArrayMemberType(descriptor);
@@ -249,11 +247,9 @@ public class IRCodeHacking {
 							// to [array, array, index, element]
 
 							// [element, array]
-							builder.add(
-									new CfStackInstruction(CfStackInstruction.Opcode.Dup)
-							);  // [element, array, array]
+							builder.add(CfStackInstruction.DUP);  // [element, array, array]
 							swap(builder, 2, wordSize); // [array, array, element]
-							builder.add(new CfConstNumber(index++, ValueType.INT)); // [array, array, element, index]
+							builder.add(CfConstNumber.constNumber(index++, ValueType.INT)); // [array, array, element, index]
 							swap(builder, 1, wordSize); // [array, array, index, element]
 							builder.add(new CfArrayStore(memberType)); // [element?, array]
 							registerIndex += wordSize;
@@ -301,9 +297,9 @@ public class IRCodeHacking {
 						case 1:
 							for (int i = 0; i < size; i++) {
 								builder.add(
-										new CfStackInstruction(CfStackInstruction.Opcode.Dup),
-										new CfConstNumber(i, ValueType.INT),
-										new CfConstNumber(unsafe.getByte(arrayData, Unsafe.ARRAY_SHORT_BASE_OFFSET + i), ValueType.INT),
+										CfStackInstruction.DUP,
+										CfConstNumber.constNumber(i, ValueType.INT),
+										CfConstNumber.constNumber(unsafe.getByte(arrayData, Unsafe.ARRAY_SHORT_BASE_OFFSET + i), ValueType.INT),
 										new CfArrayStore(type)
 								);
 							}
@@ -311,9 +307,9 @@ public class IRCodeHacking {
 						case 2:
 							for (int i = 0; i < size; i++) {
 								builder.add(
-										new CfStackInstruction(CfStackInstruction.Opcode.Dup),
-										new CfConstNumber(i, ValueType.INT),
-										new CfConstNumber(reverseShort(unsafe.getShort(arrayData, Unsafe.ARRAY_SHORT_BASE_OFFSET + i * 2L)), ValueType.INT),
+										CfStackInstruction.DUP,
+										CfConstNumber.constNumber(i, ValueType.INT),
+										CfConstNumber.constNumber(reverseShort(unsafe.getShort(arrayData, Unsafe.ARRAY_SHORT_BASE_OFFSET + i * 2L)), ValueType.INT),
 										new CfArrayStore(type)
 								);
 							}
@@ -321,9 +317,9 @@ public class IRCodeHacking {
 						case 4:
 							for (int i = 0; i < size; i++) {
 								builder.add(
-										new CfStackInstruction(CfStackInstruction.Opcode.Dup),
-										new CfConstNumber(i, ValueType.INT),
-										new CfConstNumber(reverseInt(unsafe.getInt(arrayData, Unsafe.ARRAY_SHORT_BASE_OFFSET + i * 4L)), ValueType.INT),
+										CfStackInstruction.DUP,
+										CfConstNumber.constNumber(i, ValueType.INT),
+										CfConstNumber.constNumber(reverseInt(unsafe.getInt(arrayData, Unsafe.ARRAY_SHORT_BASE_OFFSET + i * 4L)), ValueType.INT),
 										new CfArrayStore(type)
 								);
 							}
@@ -331,9 +327,9 @@ public class IRCodeHacking {
 						case 8:
 							for (int i = 0; i < size; i++) {
 								builder.add(
-										new CfStackInstruction(CfStackInstruction.Opcode.Dup),
-										new CfConstNumber(i, ValueType.INT),
-										new CfConstNumber(reverseLong(unsafe.getLong(arrayData, Unsafe.ARRAY_SHORT_BASE_OFFSET + i * 8L)), ValueType.LONG),
+										CfStackInstruction.DUP,
+										CfConstNumber.constNumber(i, ValueType.INT),
+										CfConstNumber.constNumber(reverseLong(unsafe.getLong(arrayData, Unsafe.ARRAY_SHORT_BASE_OFFSET + i * 8L)), ValueType.LONG),
 										new CfArrayStore(type)
 								);
 							}
