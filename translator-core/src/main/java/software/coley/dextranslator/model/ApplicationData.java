@@ -17,9 +17,7 @@ import software.coley.dextranslator.util.ThreadPools;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -78,6 +76,38 @@ public class ApplicationData {
 			// Close any internal archive providers now the application is fully processed.
 			inputApplication.closeInternalArchiveProviders();
 		}
+	}
+
+	/**
+	 * @param classFile
+	 * 		Bytecode of class to read.
+	 *
+	 * @return Application data of the content.
+	 *
+	 * @throws IOException
+	 * 		When content could not be read from the inputs.
+	 */
+	@Nonnull
+	public static ApplicationData fromClass(@Nonnull byte[] classFile) throws IOException {
+		InternalOptions options = new Options().setLenient(true).getInternalOptions();
+		Inputs inputs = new Inputs().addJvmClass(classFile);
+		return from(inputs, options);
+	}
+
+	/**
+	 * @param classFiles
+	 * 		Collection of classes to read.
+	 *
+	 * @return Application data of the content.
+	 *
+	 * @throws IOException
+	 * 		When content could not be read from the inputs.
+	 */
+	@Nonnull
+	public static ApplicationData fromClasses(@Nonnull Collection<byte[]> classFiles) throws IOException {
+		InternalOptions options = new Options().setLenient(true).getInternalOptions();
+		Inputs inputs = new Inputs().addJvmClasses(classFiles);
+		return from(inputs, options);
 	}
 
 	/**
@@ -227,7 +257,23 @@ public class ApplicationData {
 	}
 
 	/**
-	 * Updates the {@link #getApplication()} to replace a prior entry of the given class,
+	 * Updates the {@link #getApplication() application} to replace a prior entry of the given class,
+	 * with the new instance provided.
+	 *
+	 * @param classFile
+	 * 		Class file to update the application with.
+	 *
+	 * @return Original class instance replaced. May be {@code null} if no class by the name existed previously.
+	 */
+	@Nullable
+	public DexProgramClass updateClass(@Nonnull byte[] classFile) throws IOException {
+		Map<String, DexProgramClass> map = updateClasses(fromClass(classFile));
+		if (map.isEmpty()) return null;
+		return map.values().iterator().next();
+	}
+
+	/**
+	 * Updates the {@link #getApplication() application} to replace a prior entry of the given class,
 	 * with the new instance provided.
 	 *
 	 * @param updated
@@ -241,7 +287,24 @@ public class ApplicationData {
 	}
 
 	/**
-	 * Updates the {@link #getApplication()} to replace a prior entry of the given class,
+	 * Updates the {@link #getApplication() application} to replace prior entries of the given classes,
+	 * with the new instances provided.
+	 *
+	 * @param classFiles
+	 * 		Collection of class files to update the application with.
+	 *
+	 * @return Original class instances replaced. Values may be {@code null} if no class by the name existed previously.
+	 *
+	 * @see #updateClasses(ApplicationData) Delegated call with
+	 * {@link ApplicationData#fromClasses(Collection)} on the parameter.
+	 */
+	@Nonnull
+	public Map<String, DexProgramClass> updateClasses(@Nonnull Collection<byte[]> classFiles) throws IOException {
+		return updateClasses(fromClasses(classFiles));
+	}
+
+	/**
+	 * Updates the {@link #getApplication() application} to replace a prior entry of the given class,
 	 * with the new instance provided.
 	 *
 	 * @param internalName
@@ -266,7 +329,22 @@ public class ApplicationData {
 	}
 
 	/**
-	 * Updates the {@link #getApplication()} to replace prior entries of the given classes,
+	 * Takes all the program classes in the given application model, and puts them in our model.
+	 *
+	 * @param data
+	 * 		Application data to pull classes from.
+	 *
+	 * @return Original class instances replaced. Values may be {@code null} if no class by the name existed previously.
+	 *
+	 * @see #updateClasses(Map) Delegated call with {@link ApplicationData#toClassMap()} on the parameter.
+	 */
+	@Nonnull
+	public Map<String, DexProgramClass> updateClasses(@Nonnull ApplicationData data) {
+		return updateClasses(data.toClassMap());
+	}
+
+	/**
+	 * Updates the {@link #getApplication() application} to replace prior entries of the given classes,
 	 * with the new instances provided.
 	 *
 	 * @param updatedClasses
@@ -291,11 +369,34 @@ public class ApplicationData {
 	}
 
 	/**
-	 * @throws IOException
-	 * 		Closes class and resource providers within the {@link #getInputApplication()}.
+	 * @return Map of internal names, to program classes in the application.
 	 */
-	public void close() throws IOException {
-		inputApplication.signalFinishedToProviders(null);
+	@Nonnull
+	public Map<String, DexProgramClass> toClassMap() {
+		return application.classes().stream()
+				.collect(Collectors.toMap(DexClass::getTypeName, c -> c));
+	}
+
+	/**
+	 * @return Sorted set of class names in the application.
+	 */
+	@Nonnull
+	public SortedSet<String> getClassNames() {
+		return application.classes().stream()
+				.map(DexClass::getTypeName)
+				.collect(Collectors.toCollection(TreeSet::new));
+	}
+
+	/**
+	 * @param internalName
+	 * 		Internal class name. For example {@code java/lang/String}.
+	 *
+	 * @return Program definition in the {@link #getApplication() application}.
+	 */
+	@Nullable
+	public DexProgramClass getClass(@Nonnull String internalName) {
+		DexType type = application.dexItemFactory().createType("L" + internalName + ";");
+		return application.programDefinitionFor(type);
 	}
 
 	/**
@@ -317,6 +418,16 @@ public class ApplicationData {
 	}
 
 	/**
+	 * Closes class and resource providers within the {@link #getInputApplication()}.
+	 *
+	 * @throws IOException
+	 * 		When closing a resource provider encountered issues.
+	 */
+	public void close() throws IOException {
+		inputApplication.signalFinishedToProviders(null);
+	}
+
+	/**
 	 * @param newOptions
 	 * 		Options providing context for the copy operation.
 	 *
@@ -328,18 +439,6 @@ public class ApplicationData {
 		if (newOptions != applicationCopy.options)
 			applicationCopy.options = newOptions;
 		return applicationCopy;
-	}
-
-	/**
-	 * @param internalName
-	 * 		Internal class name. For example {@code java/lang/String}.
-	 *
-	 * @return Program definition in the {@link #getApplication() application}.
-	 */
-	@Nullable
-	public DexProgramClass getClass(@Nonnull String internalName) {
-		DexType type = application.dexItemFactory().createType("L" + internalName + ";");
-		return application.programDefinitionFor(type);
 	}
 
 	/**

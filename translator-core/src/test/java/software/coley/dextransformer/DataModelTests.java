@@ -5,6 +5,7 @@ import com.android.tools.r8.graph.DexEncodedMethod;
 import com.android.tools.r8.graph.DexProgramClass;
 import com.android.tools.r8.utils.AndroidApiLevel;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 import org.junit.jupiter.api.Test;
 import software.coley.dextranslator.Inputs;
 import software.coley.dextranslator.Options;
@@ -12,6 +13,8 @@ import software.coley.dextranslator.model.ApplicationData;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -51,5 +54,78 @@ public class DataModelTests extends TestBase {
 		assertSame(mainClass, mainClassPostExport);
 		assertSame(mainMethod, mainMethodPostExport);
 		assertSame(code, codePostExport);
+	}
+
+	@Test
+	void mergeClassesIntoNewModelFromJar() {
+		String resourcePathCL = "/dx-samples/068-classloader/classes.jar";
+		String resourcePathEX = "/dx-samples/008-exceptions/classes.jar";
+		mergeClassesIntoNewModelFromJar(resourcePathCL, resourcePathEX);
+	}
+
+	@Test
+	void mergeClassesIntoNewModelFromDex() {
+		String resourcePathCL = "/dx-samples/068-classloader/classes.dex";
+		String resourcePathEX = "/dx-samples/008-exceptions/classes.dex";
+		mergeClassesIntoNewModelFromJar(resourcePathCL, resourcePathEX);
+	}
+
+	private static void mergeClassesIntoNewModelFromJar(String resourcePathCL, String resourcePathEX) {
+		// Inputs
+		Path pathCL = assertDoesNotThrow(() -> Paths.get(DataModelTests.class.getResource(resourcePathCL).toURI()));
+		Path pathEX = assertDoesNotThrow(() -> Paths.get(DataModelTests.class.getResource(resourcePathEX).toURI()));
+		Inputs inputsCL = new Inputs();
+		Inputs inputsEX = new Inputs();
+		if (resourcePathCL.endsWith(".jar")) inputsCL.addJarArchive(pathCL);
+		else assertDoesNotThrow(() -> inputsCL.addDex(pathCL));
+		if (resourcePathEX.endsWith(".jar")) inputsEX.addJarArchive(pathEX);
+		else assertDoesNotThrow(() -> inputsEX.addDex(pathEX));
+		Options options = new Options()
+				.setApiLevel(AndroidApiLevel.getAndroidApiLevel(30));
+
+		// Application models
+		Set<String> expectedClClasses = Sets.newHashSet(
+				"Base",
+				"BaseOkay",
+				"DoubledExtend",
+				"DoubledExtendOkay",
+				"DoubledImplement",
+				"DoubledImplement2",
+				"FancyLoader",
+				"ICommon",
+				"ICommon2",
+				"IDoubledExtendOkay",
+				"IGetDoubled",
+				"IfaceSuper",
+				"InaccessibleBase",
+				"InaccessibleInterface",
+				"Main",
+				"SimpleBase",
+				"Useless"
+		);
+		Set<String> expectedExClasses = Sets.newHashSet(
+				"BadError",
+				"BadErrorNoStringInit",
+				"BadInit",
+				"BadInitNoStringInit",
+				"BadSuperClass",
+				"DerivedFromBadSuperClass",
+				"Main",
+				"MultiDexBadInit",
+				"MultiDexBadInitWrapper1"
+		);
+		ApplicationData dataCL = assertDoesNotThrow(() -> ApplicationData.from(inputsCL, options.getInternalOptions()));
+		ApplicationData dataEX = assertDoesNotThrow(() -> ApplicationData.from(inputsEX, options.getInternalOptions()));
+		assertEquals(expectedClClasses, dataCL.getClassNames());
+		assertEquals(expectedExClasses, dataEX.getClassNames());
+
+		// Merge classes
+		Set<String> expectedCombined = Sets.union(expectedClClasses, expectedExClasses);
+		dataCL.updateClasses(dataEX);
+		assertEquals(expectedCombined, dataCL.getClassNames());
+
+		// Exported class math should contain both
+		Map<String, byte[]> classes = assertDoesNotThrow(() -> dataCL.exportToJvmClassMap());
+		assertEquals(classes.keySet(), dataCL.getClassNames());
 	}
 }

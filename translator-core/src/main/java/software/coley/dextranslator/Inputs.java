@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.BiConsumer;
 
@@ -30,6 +31,7 @@ public class Inputs {
 	 *
 	 * @return Self
 	 */
+	@Nonnull
 	public Inputs addAarArchive(@Nonnull Path archivePath) {
 		return addResource(new Input(
 				new PathOrigin(archivePath),
@@ -43,6 +45,7 @@ public class Inputs {
 	 *
 	 * @return Self
 	 */
+	@Nonnull
 	public Inputs addJarArchive(@Nonnull Path archivePath) {
 		return addResource(new Input(
 				new PathOrigin(archivePath),
@@ -56,6 +59,7 @@ public class Inputs {
 	 *
 	 * @return Self
 	 */
+	@Nonnull
 	public Inputs addProgramProvider(@Nonnull ProgramResourceProvider provider) {
 		return addResource(new Input(
 				(origin, builder) -> builder.addProgramResourceProvider(provider))
@@ -71,6 +75,7 @@ public class Inputs {
 	 * @throws IOException
 	 * 		When the path cannot be read from.
 	 */
+	@Nonnull
 	public Inputs addJvmClass(@Nonnull Path classFilePath) throws IOException {
 		byte[] classBytes = Files.readAllBytes(classFilePath);
 		return addResource(new Input(
@@ -85,8 +90,20 @@ public class Inputs {
 	 *
 	 * @return Self
 	 */
+	@Nonnull
 	public Inputs addJvmClass(@Nonnull byte[] classBytes) {
 		return addResource(new Input((origin, builder) -> builder.addClassProgramData(classBytes, origin)));
+	}
+
+	/**
+	 * @param classes
+	 * 		Collection of class files to add as an input.
+	 *
+	 * @return Self
+	 */
+	@Nonnull
+	public Inputs addJvmClasses(@Nonnull Collection<byte[]> classes) {
+		return addResource(new Input((origin, builder) -> builder.addClassProgramData(classes)));
 	}
 
 	/**
@@ -98,6 +115,7 @@ public class Inputs {
 	 * @throws IOException
 	 * 		When the path cannot be read from.
 	 */
+	@Nonnull
 	public Inputs addDex(@Nonnull Path dexFilePath) throws IOException {
 		byte[] dexBytes = Files.readAllBytes(dexFilePath);
 		return addResource(new Input(
@@ -112,6 +130,7 @@ public class Inputs {
 	 *
 	 * @return Self
 	 */
+	@Nonnull
 	public Inputs addDex(@Nonnull byte[] dexBytes) {
 		return addResource(new Input((origin, builder) -> builder.addDexProgramData(dexBytes, origin)));
 	}
@@ -122,6 +141,7 @@ public class Inputs {
 	 *
 	 * @return Self
 	 */
+	@Nonnull
 	public Inputs addResource(@Nonnull Input input) {
 		inputs.add(input);
 		return this;
@@ -135,6 +155,7 @@ public class Inputs {
 	 *
 	 * @return Passed builder.
 	 */
+	@Nonnull
 	public AndroidApp.Builder populate(@Nonnull AndroidApp.Builder builder) {
 		for (Input input : inputs)
 			input.applyTo(builder);
