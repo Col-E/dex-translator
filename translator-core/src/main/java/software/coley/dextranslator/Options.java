@@ -35,8 +35,52 @@ public class Options {
 		// It does all the translation work we need, and we do not need any optimizer capabilities of R8.
 		options.tool = Marker.Tool.D8;
 
-		// We don't really need this one. Eats up ton of resources.
+		// Disabled by default as this is quite slow.
 		options.enableLoadStoreOptimization = false;
+	}
+
+	/**
+	 * Enables load store optimization.
+	 * <p/>
+	 * Particularly useful in Dalvik --> Java conversions.
+	 * Consider the following Dalvik code:
+	 * <pre>{@code
+	 *     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
+	 *     sget-object v0, Ljava/lang/System;->out:Ljava/io/PrintStream;
+	 *     const-string v1, "Ctor: doubled implement, type 1"
+	 *     invoke-virtual {v0, v1}, Ljava/io/PrintStream;->println(Ljava/lang/String;)V
+	 *     return-void
+	 * }</pre>
+	 * Without optimization this becomes:
+	 * <pre>{@code
+	 *    L0
+	 *     aload 0
+	 *     invokespecial java/lang/Object.<init> ()V
+	 *    L1
+	 *     getstatic java/lang/System.out : Ljava/io/PrintStream;
+	 *     astore 0
+	 *     aload 0 // Does not inline
+	 *     ldc "Ctor: doubled implement, type 1"
+	 *     invokevirtual java/io/PrintStream.println (Ljava/lang/String;)V
+	 *     return
+	 * }</pre>
+	 * With optimization:
+	 * <pre>{@code
+	 *    L0
+	 *     aload 0
+	 *     invokespecial java/lang/Object.<init> ()V
+	 *    L1
+	 *     getstatic java/lang/System.out : Ljava/io/PrintStream;
+	 *     ldc "Ctor: doubled implement, type 1"
+	 *     invokevirtual java/io/PrintStream.println (Ljava/lang/String;)V
+	 *     return
+	 * }</pre>
+	 *
+	 * @return Self
+	 */
+	public Options enableLoadStoreOptimization() {
+		options.enableLoadStoreOptimization = false;
+		return this;
 	}
 
 	/**
