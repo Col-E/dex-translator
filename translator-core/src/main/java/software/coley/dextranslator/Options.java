@@ -79,7 +79,7 @@ public class Options {
 	 * @return Self
 	 */
 	public Options enableLoadStoreOptimization() {
-		options.enableLoadStoreOptimization = false;
+		options.enableLoadStoreOptimization = true;
 		return this;
 	}
 
