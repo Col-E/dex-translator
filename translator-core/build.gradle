@@ -99,6 +99,8 @@ tasks.named('generatePomFileForMavenPublication').configure {
 // Make it so that jar-generating tasks requires generating POM files first.
 jar {
     dependsOn(tasks.named('generatePomFileForMavenPublication'))
+
+    // Also bundle R8 into our artifact
     from {
         configurations.api_r8.collect { it.isDirectory() ? it : zipTree(it) }
     }
