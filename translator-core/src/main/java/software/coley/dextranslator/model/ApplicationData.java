@@ -96,9 +96,10 @@ public class ApplicationData {
 				.addLibraryResourceProvider(systemJdkProvider())
 				.build();
 		InternalOptions options = new Options().getInternalOptions();
-		LazyLoadedDexApplication application = DexApplication.builder(options, Timing.empty())
-				.addProgramClasses(classes)
-				.build();
+		LazyLoadedDexApplication.Builder builder = DexApplication.builder(options, Timing.empty())
+				.addProgramClasses(classes);
+		builder.setFlags(DexApplicationReadFlags.builder().build());
+		LazyLoadedDexApplication application = builder.build();
 		return new ApplicationData(inputApplication, application);
 	}
 
