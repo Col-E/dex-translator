@@ -416,12 +416,22 @@ public class ApplicationData {
 	}
 
 	/**
+	 * @return Provider to supply an {@link Options} instance for export operations.
+	 * For exporting to JVM bytecode for instance you may want to supply an
+	 * options configured with {@link Options#enableLoadStoreOptimization()}.
+	 */
+	@Nonnull
+	public Supplier<Options> getOperationOptionsProvider() {
+		return operationOptionsProvider;
+	}
+
+	/**
 	 * @param operationOptionsProvider
 	 * 		Provider to supply an {@link Options} instance for export operations.
 	 * 		For exporting to JVM bytecode for instance you may want to supply an
 	 * 		options configured with {@link Options#enableLoadStoreOptimization()}.
 	 */
-	public void setOperationOptionsProvider(Supplier<Options> operationOptionsProvider) {
+	public void setOperationOptionsProvider(@Nonnull Supplier<Options> operationOptionsProvider) {
 		this.operationOptionsProvider = operationOptionsProvider;
 	}
 
