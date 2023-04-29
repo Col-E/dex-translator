@@ -46,6 +46,7 @@ public class Dex2Jar extends AbstractConversionCommand {
 			inputs.addDex(inputFile.toPath());
 
 		Options options = new Options()
+				.enableLoadStoreOptimization()
 				.setReplaceInvalidMethodBodies(replaceInvalid)
 				.setLenient(lenient)
 				.setJvmArchiveOutput(outputFile.toPath(), true);
