@@ -5,6 +5,7 @@ plugins {
 
 dependencies {
     implementation project(':translator-core')
+    implementation r8
     implementation 'info.picocli:picocli:4.7.2'
 }
 

@@ -6,6 +6,10 @@ allprojects {
 subprojects {
     apply plugin: 'java'
 
+    ext {
+        r8 = 'com.android.tools:r8:8.2.2'
+    }
+
     repositories {
         mavenLocal()
         mavenCentral()
