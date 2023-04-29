@@ -12,8 +12,9 @@ application {
     getMainClass().set('software.coley.dextranslator.Main')
 }
 
-// TODO: Due to classpath setup, shadowJar is not minifying in this CLI module.
-//   We should instead create a standard fatJar, then use proguard+shrinking on it
+// We will be using shadowJar, so no need to run the jar task.
+tasks.jar.enabled = false
+
 shadowJar {
     minimize {
         exclude('**/*.java',
@@ -21,9 +22,6 @@ shadowJar {
                 'module-info.class'
         )
     }
-
-    // Clearly indicate we are shading R8 content
-    relocate 'com.android.tools.r8', 'shade.r8'
 
     // Remove the classifier suffix.
     archiveClassifier.set('')

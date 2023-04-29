@@ -2,15 +2,15 @@ plugins {
     id 'java-library'
     id 'maven-publish'
     id "com.peterabeles.gversion" version "1.10"
-    id 'com.github.johnrengelman.shadow' version '7.1.2'
 }
 
 dependencies {
+    implementation 'org.ow2.asm:asm:9.5'
+    implementation 'com.google.code.findbugs:jsr305:3.0.2'
+
     api 'com.android.tools:r8:8.2.2'
-    api 'com.google.code.findbugs:jsr305:3.0.2'
     api 'it.unimi.dsi:fastutil:8.5.11'
     api 'com.google.guava:guava:31.1-jre'
-    api 'org.ow2.asm:asm:9.5'
 
     testImplementation 'org.ow2.asm:asm-tree:9.5'
     testImplementation 'org.ow2.asm:asm-util:9.5'
@@ -51,6 +51,16 @@ test {
     systemProperty 'junit.jupiter.execution.parallel.config.fixed.max-pool-size', 3
 }
 
+task sourcesJar(type: Jar) {
+    duplicatesStrategy = 'include'
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+java {
+    withSourcesJar()
+}
+
 // Configure publishing for generation of 'pom.xml'
 publishing {
     publications {
@@ -58,9 +68,7 @@ publishing {
             groupId = project.group
             version = project.version
             artifactId = "dex-translator"
-
             from components.java
-            artifact(tasks['shadowJar'])
         }
     }
 }
@@ -82,35 +90,7 @@ tasks.named("generatePomFileForMavenPublication").configure {
     }
 }
 
-// Make it so that shadowJar requires generating POM files first.
-tasks.named("shadowJar") {
+// Make it so that jar-generating tasks requires generating POM files first.
+tasks.named("jar") {
     dependsOn(tasks.named("generatePomFileForMavenPublication"))
-}
-
-// Configure shadow to include only:
-//  - our code
-//  - shaded/minified r8
-shadowJar {
-    dependencies {
-        exclude "com/google/**"
-        exclude "it/**"
-        exclude "javax/**"
-        exclude "joptsimple/**"
-        exclude "kotlin/**"
-        exclude "kotlinx/**"
-        exclude "org/**"
-    }
-
-    minimize {
-        exclude('**/*.java',
-                '**/package-info.class',
-                'module-info.class'
-        )
-    }
-
-    // Clearly indicate we are shading R8 content
-    relocate 'com.android.tools.r8', 'shade.r8'
-
-    // Remove the classifier suffix.
-    archiveClassifier.set('')
 }
