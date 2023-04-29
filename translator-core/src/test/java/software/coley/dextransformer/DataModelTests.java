@@ -1,6 +1,7 @@
 package software.coley.dextransformer;
 
 import com.android.tools.r8.graph.Code;
+import com.android.tools.r8.graph.DexApplication;
 import com.android.tools.r8.graph.DexEncodedMethod;
 import com.android.tools.r8.graph.DexProgramClass;
 import com.android.tools.r8.utils.AndroidApiLevel;
@@ -13,6 +14,8 @@ import software.coley.dextranslator.model.ApplicationData;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -54,6 +57,28 @@ public class DataModelTests extends TestBase {
 		assertSame(mainClass, mainClassPostExport);
 		assertSame(mainMethod, mainMethodPostExport);
 		assertSame(code, codePostExport);
+	}
+
+	@Test
+	void testDataFromProgramClassesYieldsSameResults() {
+		// Inputs
+		String resourcePath = "/dx-samples/008-exceptions/classes.jar";
+		Path jarPath = assertDoesNotThrow(() -> Paths.get(DataModelTests.class.getResource(resourcePath).toURI()));
+		Inputs inputs = new Inputs().addJarArchive(jarPath);
+		Options options = new Options()
+				.setApiLevel(AndroidApiLevel.getAndroidApiLevel(30));
+
+		// Model
+		ApplicationData data = assertDoesNotThrow(() -> ApplicationData.from(inputs, options.getInternalOptions()));
+
+		// Re-create the model to test if pulling from DexProgramClasses works
+		ApplicationData dataCopy = assertDoesNotThrow(() ->
+				ApplicationData.fromProgramClasses(data.getApplication().classes()));
+
+		// Operations should yield the same results
+		Map<String, byte[]> mapCopy = assertDoesNotThrow(() -> dataCopy.exportToJvmClassMap());
+		Map<String, byte[]> mapOrig = assertDoesNotThrow(() -> data.exportToJvmClassMap());
+		assertEquals(mapOrig.keySet(), mapCopy.keySet());
 	}
 
 	@Test
