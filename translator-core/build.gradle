@@ -4,11 +4,17 @@ plugins {
     id "com.peterabeles.gversion" version "1.10"
 }
 
+configurations {
+    api_r8
+    api_r8.transitive = false
+    implementation.extendsFrom(api_r8)
+}
+
 dependencies {
     implementation 'org.ow2.asm:asm:9.5'
     implementation 'com.google.code.findbugs:jsr305:3.0.2'
 
-    api 'com.android.tools:r8:8.2.2'
+    api_r8 'com.android.tools:r8:8.2.2'
     api 'it.unimi.dsi:fastutil:8.5.11'
     api 'com.google.guava:guava:31.1-jre'
 
@@ -67,14 +73,14 @@ publishing {
         maven(MavenPublication) {
             groupId = project.group
             version = project.version
-            artifactId = "dex-translator"
+            artifactId = 'dex-translator'
             from components.java
         }
     }
 }
 
 // Hack to generate POM files for the output.
-tasks.named("generatePomFileForMavenPublication").configure {
+tasks.named('generatePomFileForMavenPublication').configure {
     destination = project.file('build/classes/java/main/META-INF/maven/software.coley/dex-translator/pom.xml')
     def properties = project.file('build/classes/java/main/META-INF/maven/software.coley/dex-translator/pom.properties')
 
@@ -91,6 +97,9 @@ tasks.named("generatePomFileForMavenPublication").configure {
 }
 
 // Make it so that jar-generating tasks requires generating POM files first.
-tasks.named("jar") {
-    dependsOn(tasks.named("generatePomFileForMavenPublication"))
+jar {
+    dependsOn(tasks.named('generatePomFileForMavenPublication'))
+    from {
+        configurations.api_r8.collect { it.isDirectory() ? it : zipTree(it) }
+    }
 }
