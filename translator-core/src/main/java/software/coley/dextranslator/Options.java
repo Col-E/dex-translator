@@ -37,6 +37,9 @@ public class Options {
 
 		// Disabled by default as this is quite slow.
 		options.enableLoadStoreOptimization = false;
+
+		// Allows us to bypass the need to maintain references to dex types when exporting.
+		options.enableIdentityLookupFailureFallback = true;
 	}
 
 	/**
