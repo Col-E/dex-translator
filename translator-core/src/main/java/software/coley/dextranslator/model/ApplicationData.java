@@ -55,7 +55,8 @@ public class ApplicationData {
 	 * @return Application data of the content.
 	 *
 	 * @throws IOException
-	 * 		When content could not be read from the inputs.
+	 * 		When content could not be read from the inputs, or
+	 * 		when the supporting {@link JdkClassFileProvider} cannot be provided.
 	 */
 	@Nonnull
 	public static ApplicationData from(@Nonnull Inputs inputs, @Nonnull InternalOptions options) throws IOException {
@@ -78,6 +79,27 @@ public class ApplicationData {
 			// Close any internal archive providers now the application is fully processed.
 			inputApplication.closeInternalArchiveProviders();
 		}
+	}
+
+	/**
+	 * @param classes
+	 * 		Program classes to wrap.
+	 *
+	 * @return Application data of the content.
+	 *
+	 * @throws IOException
+	 * 		When the supporting {@link JdkClassFileProvider} cannot be provided.
+	 */
+	@Nonnull
+	public static ApplicationData fromProgramClasses(@Nonnull Collection<DexProgramClass> classes) throws IOException {
+		AndroidApp inputApplication = AndroidApp.builder()
+				.addLibraryResourceProvider(systemJdkProvider())
+				.build();
+		InternalOptions options = new Options().getInternalOptions();
+		LazyLoadedDexApplication application = DexApplication.builder(options, Timing.empty())
+				.addProgramClasses(classes)
+				.build();
+		return new ApplicationData(inputApplication, application);
 	}
 
 	/**
