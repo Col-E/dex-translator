@@ -2,7 +2,6 @@ package software.coley.dextransformer;
 
 import com.android.tools.r8.utils.AndroidApiLevel;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
@@ -13,12 +12,8 @@ import software.coley.dextranslator.model.ApplicationData;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Map;
-import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -137,31 +132,6 @@ public class ConversionTests extends TestBase {
 
 		}
 		return null;
-	}
-
-	/**
-	 * @return DEX test resources.
-	 */
-	@Nonnull
-	public static Stream<Arguments> findDexResources() throws IOException {
-		return findResources(".dex");
-	}
-
-	/**
-	 * @return JAR test resources.
-	 */
-	@Nonnull
-	public static Stream<Arguments> findJarResources() throws IOException {
-		return findResources(".jar");
-	}
-
-	@Nonnull
-	@SuppressWarnings("all")
-	private static Stream<Arguments> findResources(@Nonnull String filter) throws IOException {
-		return Files.find(Paths.get("src/test/resources/"), 10,
-						(p, attributes) -> attributes.isRegularFile() &&
-								p.getFileName().toString().endsWith(filter))
-				.map(Arguments::of);
 	}
 
 	private enum FailureType {
