@@ -24,6 +24,7 @@ public class Decompiler {
 		String name = new ClassReader(code).getClassName();
 		Map<String, String> optionsMap = new HashMap<>();
 		optionsMap.put("comments", "false");
+		optionsMap.put("forcetopsort", "true");
 		new CfrDriver.Builder()
 				.withOptions(optionsMap)
 				.withClassFileSource(new ClassFileSourceImpl(name, code))
