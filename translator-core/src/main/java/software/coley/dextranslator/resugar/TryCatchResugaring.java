@@ -6,7 +6,6 @@ import com.android.tools.r8.graph.CfCode;
 
 import javax.annotation.Nonnull;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Utilities for re-sugaring {@link CfTryCatch} in converted outputs.
@@ -20,12 +19,10 @@ public class TryCatchResugaring {
 	 *
 	 * @param cf
 	 * 		Code to update ranges of.
+	 * @param labels
+	 * 		List of labels in the code.
 	 */
-	public static int mergeTryCatchBlocks(@Nonnull CfCode cf) {
-		List<CfLabel> labels = cf.getInstructions().stream()
-				.filter(i -> i instanceof CfLabel)
-				.map(l -> (CfLabel) l)
-				.collect(Collectors.toList());
+	public static int mergeTryCatchBlocks(@Nonnull CfCode cf, @Nonnull List<CfLabel> labels) {
 		int rangeMerges = 0;
 		List<CfTryCatch> ranges = cf.getTryCatchRanges();
 		for (int i = ranges.size() - 2; i >= 0; i--) {

@@ -2,6 +2,7 @@ package software.coley.dextranslator.ir;
 
 import com.android.tools.r8.ClassFileConsumer;
 import com.android.tools.r8.cf.CfVersion;
+import com.android.tools.r8.cf.code.CfLabel;
 import com.android.tools.r8.dex.ApplicationWriter;
 import com.android.tools.r8.dex.Marker;
 import com.android.tools.r8.errors.Unreachable;
@@ -29,6 +30,7 @@ import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
+import java.util.stream.Collectors;
 
 /**
  * Conversion handling between DEX and JVM bytecode.
@@ -107,8 +109,14 @@ public class Conversion {
 						CfBuilder builder = new CfBuilder(applicationView, programMethod, irCode, EMPTY_METADATA);
 						CfCode cfCode = builder.build(deadCodeRemover, EMPTY_TIMING);
 
+						// Extract labels
+						List<CfLabel> labels = cfCode.getInstructions().stream()
+								.filter(i -> i instanceof CfLabel)
+								.map(l -> (CfLabel) l)
+								.collect(Collectors.toList());
+
 						// Apply re-sugaring processors.
-						TryCatchResugaring.mergeTryCatchBlocks(cfCode);
+						TryCatchResugaring.mergeTryCatchBlocks(cfCode, labels);
 
 						// Update method.
 						method.setCode(cfCode, EMPTY_ARRAY_MAP);
