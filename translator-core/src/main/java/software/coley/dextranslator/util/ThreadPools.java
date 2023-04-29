@@ -16,22 +16,21 @@ public class ThreadPools {
 	 * @return Shared fixed thread pool with max amount of threads recommended for the current system.
 	 */
 	public static ExecutorService getMaxFixedThreadPool() {
-		ExecutorService service = sharedThreadPool.get();
-		if (service == null) {
-			int nThreads = Math.max(2, Runtime.getRuntime().availableProcessors() - 1);
-			service = Executors.newFixedThreadPool(nThreads, r -> {
-				Thread t = new Thread(r);
-				t.setPriority(Thread.MAX_PRIORITY);
-				t.setDaemon(true);
-				return t;
-			});
-			((ThreadPoolExecutor) service).setKeepAliveTime(60L, TimeUnit.SECONDS);
-			((ThreadPoolExecutor) service).allowCoreThreadTimeOut(true);
-			if (!sharedThreadPool.compareAndSet(null, service)) {
-				service.shutdown();
-				service = sharedThreadPool.get();
+		synchronized (sharedThreadPool) {
+			ExecutorService service = sharedThreadPool.get();
+			if (service == null) {
+				int nThreads = Math.max(2, Runtime.getRuntime().availableProcessors() - 1);
+				service = Executors.newFixedThreadPool(nThreads, r -> {
+					Thread t = new Thread(r);
+					t.setPriority(Thread.MAX_PRIORITY);
+					t.setDaemon(true);
+					return t;
+				});
+				((ThreadPoolExecutor) service).setKeepAliveTime(60L, TimeUnit.SECONDS);
+				((ThreadPoolExecutor) service).allowCoreThreadTimeOut(true);
+				sharedThreadPool.set(service);
 			}
+			return service;
 		}
-		return service;
 	}
 }
