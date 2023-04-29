@@ -60,6 +60,7 @@ publishing {
             artifactId = "dex-translator"
 
             from components.java
+            artifact(tasks['shadowJar'])
         }
     }
 }
