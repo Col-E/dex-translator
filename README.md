@@ -39,6 +39,26 @@ jd2:
     -o, --out=<outputFile>   Path to DEX file to write to.
 ```
 
+## Library usage
+
+For most basic usage you can use the `Converter` and `Loader` types in types package. Using these looks like this:
+```java
+Inputs inputs = new Inputs();
+for (File inputFile : inputFiles)
+	inputs.addJarArchive(inputFile.toPath());
+Options options = new Options()
+		.setReplaceInvalidMethodBodies(replaceInvalid)
+		.setLenient(lenient)
+		.setDexFileOutput(outputFile.toPath());
+new Converter()
+		.setInputs(inputs)
+		.setOptions(options)
+		.run()
+```
+
+For more in-depth usage you will likely want to work directly with the `ApplicationData` class.
+You can find example usage of it among the test classes.
+
 ## Building
 
 Currently, Dex Translator assumes the `R8` artifact is available in the local Maven repository.
