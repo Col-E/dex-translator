@@ -1,0 +1,9 @@
+Dex-Translator bundles a modified variant of Google's R8 project
+
+The modified version:
+ - https://github.com/Col-E/r8
+ - https://github.com/Col-E/r8/compare/main...master (Exact changes compared to upstream)
+     - Contains assorted fixes, optimizations, and API enhancements
+
+The original version:
+ - https://r8.googlesource.com/r8/
