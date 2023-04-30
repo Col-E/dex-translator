@@ -76,6 +76,30 @@ publishing {
             version = project.version
             artifactId = 'dex-translator'
             from components.java
+
+            pom {
+                name = 'dex-translator'
+                description = ' A translation library for converting between Dalvik and JVM bytecode.'
+                url = 'https://github.com/Col-E/dex-translator/'
+                licenses {
+                    license {
+                        name = 'MIT'
+                        url = 'https://spdx.org/licenses/MIT.html'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'mcoley'
+                        name = 'Matt Coley'
+                        email = 'mcoley2@gmu.edu'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:git://github.com/Col-E/dex-translator.git'
+                    developerConnection = 'scm:git:ssh://github.com:Col-E/dex-translator.git'
+                    url = 'https://github.com/Col-E/dex-translator/'
+                }
+            }
         }
     }
 
