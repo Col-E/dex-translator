@@ -17,6 +17,17 @@ permissions:
   contents: write
 
 jobs:
+  setup:
+    name: Setup environment with R8
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout R8
+        run: git clone --depth 1 https://github.com/Col-E/r8.git
+      - name: Install R8 locally
+        run: |
+          cd r8
+          gradlew publishToMavenLocal
   test:
     name: Run test suite
     strategy:
