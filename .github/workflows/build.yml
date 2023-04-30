@@ -29,6 +29,7 @@ jobs:
           ./gradlew publishToMavenLocal
   test:
     name: Run test suite
+    needs: setup
     strategy:
       fail-fast: false
       matrix:
