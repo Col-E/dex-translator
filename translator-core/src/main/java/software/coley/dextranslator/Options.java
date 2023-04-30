@@ -44,8 +44,8 @@ public class Options {
 
 	/**
 	 * Enables load store optimization.
-	 * <p/>
-	 * Particularly useful in Dalvik --> Java conversions.
+	 * <p>
+	 * Particularly useful in Dalvik --&gt; Java conversions.
 	 * Consider the following Dalvik code:
 	 * <pre>{@code
 	 *     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
@@ -90,7 +90,7 @@ public class Options {
 	 * @param replaceInvalidMethodBodies
 	 * 		Flag to enable replacing the {@link Code} of methods which are invalid
 	 * 		for writing to the current target output <i>(Either JVM or Android)</i>.
-	 * 		<p/>
+	 * 		<p>
 	 * 		<b>Be wary when using this option</b>. When encountering a bug, please report it
 	 * 		as an issue on GitHub. In cases where the fault can be worked around this
 	 * 		allows our tool stability to improve.

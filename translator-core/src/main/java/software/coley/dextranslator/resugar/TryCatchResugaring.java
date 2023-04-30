@@ -21,6 +21,8 @@ public class TryCatchResugaring {
 	 * 		Code to update ranges of.
 	 * @param labels
 	 * 		List of labels in the code.
+	 *
+	 * @return Number of merges applied.
 	 */
 	public static int mergeTryCatchBlocks(@Nonnull CfCode cf, @Nonnull List<CfLabel> labels) {
 		int rangeMerges = 0;

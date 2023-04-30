@@ -186,6 +186,9 @@ public class ApplicationData {
 	}
 
 	/**
+	 * @param internalName
+	 * 		Internal name of class to export.
+	 *
 	 * @return JVM bytecode of the requested class.
 	 * If the class is not found in the application, will be {@code null}.
 	 *
@@ -303,6 +306,9 @@ public class ApplicationData {
 	 * 		Class file to update the application with.
 	 *
 	 * @return Original class instance replaced. May be {@code null} if no class by the name existed previously.
+	 *
+	 * @throws IOException
+	 * 		Propagated from {@link #fromClass(byte[])}
 	 */
 	@Nullable
 	public DexProgramClass updateClass(@Nonnull byte[] classFile) throws IOException {
@@ -334,6 +340,8 @@ public class ApplicationData {
 	 *
 	 * @return Original class instances replaced. Values may be {@code null} if no class by the name existed previously.
 	 *
+	 * @throws IOException
+	 * 		Propagated from {@link #fromClasses(Collection)}
 	 * @see #updateClasses(ApplicationData) Delegated call with
 	 * {@link ApplicationData#fromClasses(Collection)} on the parameter.
 	 */

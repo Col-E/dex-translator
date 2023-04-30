@@ -65,6 +65,7 @@ task sourcesJar(type: Jar) {
 
 java {
     withSourcesJar()
+    withJavadocJar()
 }
 
 // Configure publishing for generation of 'pom.xml'
@@ -75,6 +76,13 @@ publishing {
             version = project.version
             artifactId = 'dex-translator'
             from components.java
+        }
+    }
+
+    repositories {
+        maven {
+            name = 'staging_deploy'
+            url = layout.buildDirectory.dir('staging-deploy')
         }
     }
 }

@@ -84,7 +84,7 @@ public class ConversionTests extends TestBase {
 	 *
 	 * @return Failure type instance when the path points to an input that is known to fail.
 	 * Can be an intentional failure by design of the input, or a bug.
-	 * <p/>
+	 * <p>
 	 * For inputs expected to pass, returns {@code null}.
 	 */
 	@Nullable

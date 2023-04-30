@@ -16,7 +16,7 @@ import java.util.function.Supplier;
 
 /**
  * Task for converting content within am {@link ApplicationData} into a target platform determined by the {@link Options}.
- * <p/>
+ * <p>
  * To convert all content in the {@link ApplicationData} to Java ensure the {@link Options}
  * are configured to write to one of the following:
  * <ul>
@@ -24,7 +24,7 @@ import java.util.function.Supplier;
  *     <li>{@link Options#setJvmDirectoryOutput(Path, boolean)}</li>
  *     <li>{@link Options#setJvmOutput(ClassFileConsumer)}</li>
  * </ul>
- * <p/>
+ * <p>
  * To convert all content in the {@link ApplicationData} to Dalvik ensure the {@link Options}
  * are configured to write to one of the following:
  * <ul>
