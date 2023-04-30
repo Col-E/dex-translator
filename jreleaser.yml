@@ -1,0 +1,52 @@
+project:
+  name: dex-translator
+  description: A translation library for converting between Dalvik and JVM bytecode.
+  longDescription: A translation library for converting between Dalvik and JVM bytecode backed by Google's R8 project.
+  links:
+    homepage: https://github.com/Col-E/dex-translator/
+  authors:
+    - Matt Coley
+  license: MIT
+  inceptionYear: 2023
+  stereotype: none
+  java:
+    version: 11
+    groupId: software.coley
+    artifactId: dex-translator
+
+release:
+  github:
+    overwrite: true
+    tagName: '{{projectVersion}}'
+    changelog:
+      formatted: ALWAYS
+      preset: conventional-commits
+      contributors:
+        format: '- {{contributorName}}{{#contributorUsernameAsLink}} ({{.}}){{/contributorUsernameAsLink}}'
+
+distributions:
+  dist:
+    type: SINGLE_JAR
+    artifacts:
+      - path: translator-core/build/libs/{{projectName}}-{{projectVersion}}.jar
+
+signing:
+  active: RELEASE
+  mode: MEMORY
+  armored: true
+  verify: true
+  artifacts: true
+  checksums: true
+  files: false
+
+deploy:
+  maven:
+    nexus2:
+      maven-central:
+        active: RELEASE
+        url: https://s01.oss.sonatype.org/service/local
+        applyMavenCentralRules: true
+        stagingRepositories:
+          - translator-core/build/staging-deploy
+        closeRepository: true
+        releaseRepository: true
