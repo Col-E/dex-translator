@@ -1,20 +1,30 @@
-*/target/*
-target/*
-*/build
-build
-*/.project
-*/.classpath
-*/.*
-*/src/generated/*
-
-.*
-*.bak
-*.orig
-*/nb-configuration.xml
-*.iml
-*.ipr
+# IntelliJ
+out/
+.idea/
+.idea_modules/
 *.iws
-*~
-*.class
+*.iml
 
-!.gitignore
+# Eclipse
+.settings/
+.classpath
+.checkstyle
+.project
+
+# Gradle
+target/
+build/
+generated/
+gradle-app.setting
+.gradle
+.gradletasknamecache
+!gradle-wrapper.jar
+**/build/
+
+# Misc
+hs_err_pid*
+*.log
+*.ctxt
+*.bkp
+*.dtmp
+temp/
