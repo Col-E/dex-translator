@@ -28,7 +28,7 @@ distributions:
   dist:
     type: SINGLE_JAR
     artifacts:
-      - path: translator-core/build/libs/{{projectName}}-{{projectVersion}}.jar
+      - path: translator-core/build/libs/translator-core-{{projectVersion}}.jar
 
 signing:
   active: RELEASE
