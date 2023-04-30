@@ -22,6 +22,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
+      - name: Setup Java JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: 'maven'
       - name: Checkout and Install R8 locally
         run: |
           git clone --depth 1 https://github.com/Col-E/r8.git
