@@ -41,6 +41,21 @@ jd2:
 
 ## Library usage
 
+Maven dependency:
+```xml
+<dependency>
+    <groupId>software.coley</groupId>
+    <artifactId>dex-translator</artifactId>
+    <version>${dexVersion}</version> <!-- See release page for latest version -->
+</dependency>
+```
+
+Gradle dependency:
+```groovy
+implementation group: 'software.coley', name: 'dex-translator', version: dexVersion
+implementation "software.coley:dex-translator:${dexVersion}"
+```
+
 For most basic usage you can use the `Converter` and `Loader` types in types package. Using these looks like this:
 ```java
 Inputs inputs = new Inputs();
