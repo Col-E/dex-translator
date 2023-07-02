@@ -15,6 +15,8 @@ dependencies {
     implementation 'com.google.code.findbugs:jsr305:3.0.2'
 
     api_r8 r8
+
+    // Required dependencies of R8
     api 'it.unimi.dsi:fastutil:8.5.11'
     api 'com.google.guava:guava:31.1-jre'
 

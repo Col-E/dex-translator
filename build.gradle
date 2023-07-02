@@ -1,13 +1,13 @@
 allprojects {
     group 'software.coley'
-    version '1.1.0'
+    version '1.1.1'
 }
 
 subprojects {
     apply plugin: 'java'
 
     ext {
-        r8 = 'com.android.tools:r8:8.2.2'
+        r8 = 'com.android.tools:r8:8.2.17'
     }
 
     repositories {

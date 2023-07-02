@@ -84,8 +84,7 @@ public class Conversion {
 
 		// Handle rewriting input code models to the target code model type.
 		boolean isJvmTarget = options.isGeneratingClassFiles();
-		CodeRewriter codeRewriter = new CodeRewriter(applicationView);
-		DeadCodeRemover deadCodeRemover = new DeadCodeRemover(applicationView, codeRewriter);
+		DeadCodeRemover deadCodeRemover = new DeadCodeRemover(applicationView);
 		for (DexProgramClass dexClass : applicationView.appInfo().classes()) {
 			// In some configurations, having this be null causes problems.
 			// Setting it to any version resolves the problem.
