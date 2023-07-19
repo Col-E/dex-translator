@@ -81,7 +81,7 @@ publishing {
 
             pom {
                 name = 'dex-translator'
-                description = ' A translation library for converting between Dalvik and JVM bytecode.'
+                description = 'A translation library for converting between Dalvik and JVM bytecode.'
                 url = 'https://github.com/Col-E/dex-translator/'
                 licenses {
                     license {
