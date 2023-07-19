@@ -1,3 +1,5 @@
+import java.nio.file.Files
+
 plugins {
     id 'java-library'
     id 'maven-publish'
@@ -29,7 +31,12 @@ dependencies {
 }
 
 // Force generation for gversion data class
-project.compileJava.dependsOn(createVersionFile)
+tasks.register('conditionalBuildConfigUpdate') {
+    if (!isBuildConfigUpToDate()) {
+        finalizedBy createVersionFile
+    }
+}
+project.compileJava.dependsOn('conditionalBuildConfigUpdate')
 gversion {
     srcDir = "src/generated/java/"
     classPackage = "software.coley.dextranslator"
@@ -47,6 +54,17 @@ sourceSets {
             srcDirs 'src/generated/java', 'src/main/java'
         }
     }
+}
+private boolean isBuildConfigUpToDate() {
+    File buildConfigPath = project.file(gversion.srcDir +
+            gversion.classPackage.replace('.', '/') + '/' +
+            gversion.className + ".java")
+    if (buildConfigPath.exists()) {
+        String text = new String(Files.readAllBytes(buildConfigPath.toPath()))
+        if (text.contains('VERSION = "' + project.version + '"'))
+            return true
+    }
+    return false
 }
 
 test {
