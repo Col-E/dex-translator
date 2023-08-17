@@ -162,7 +162,8 @@ public class IRCodeHacking {
 					registerIndex += wordSize;
 				}
 
-				InvokeNewArray invokeNewArray = new InvokeNewArray(type, null, arguments) {
+				// 'InvokeNewArray' renamed to 'NewArrayFilled' in R8 after 8.3.0
+				NewArrayFilled invokeNewArray = new NewArrayFilled(type, null, arguments) {
 					@Override
 					public void insertLoadAndStores(InstructionListIterator it, LoadStoreHelper helper) {
 						helper.loadInValues(this, it);
@@ -222,7 +223,7 @@ public class IRCodeHacking {
 					registerIndex += wordSize;
 				}
 
-				InvokeNewArray invokeNewArray = new InvokeNewArray(type, null, arguments) {
+				NewArrayFilled invokeNewArray = new NewArrayFilled(type, null, arguments) {
 					@Override
 					public void insertLoadAndStores(InstructionListIterator it, LoadStoreHelper helper) {
 						helper.loadInValues(this, it);
