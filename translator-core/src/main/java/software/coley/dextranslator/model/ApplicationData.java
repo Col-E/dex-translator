@@ -92,10 +92,41 @@ public class ApplicationData {
 	 */
 	@Nonnull
 	public static ApplicationData fromProgramClasses(@Nonnull Collection<DexProgramClass> classes) throws IOException {
+		return fromProgramClasses(classes, new Options().setLenient(true));
+	}
+
+	/**
+	 * @param classes
+	 * 		Program classes to wrap.
+	 * @param options
+	 * 		Simplified input options.
+	 *
+	 * @return Application data of the content.
+	 *
+	 * @throws IOException
+	 * 		When the supporting {@link JdkClassFileProvider} cannot be provided.
+	 */
+	@Nonnull
+	public static ApplicationData fromProgramClasses(@Nonnull Collection<DexProgramClass> classes, @Nonnull Options options) throws IOException {
+		return fromProgramClasses(classes, options.getInternalOptions());
+	}
+
+	/**
+	 * @param classes
+	 * 		Program classes to wrap.
+	 * @param options
+	 * 		Internal R8 options.
+	 *
+	 * @return Application data of the content.
+	 *
+	 * @throws IOException
+	 * 		When the supporting {@link JdkClassFileProvider} cannot be provided.
+	 */
+	@Nonnull
+	public static ApplicationData fromProgramClasses(@Nonnull Collection<DexProgramClass> classes, @Nonnull InternalOptions options) throws IOException {
 		AndroidApp inputApplication = AndroidApp.builder()
 				.addLibraryResourceProvider(systemJdkProvider())
 				.build();
-		InternalOptions options = new Options().getInternalOptions();
 		LazyLoadedDexApplication.Builder builder = DexApplication.builder(options, Timing.empty())
 				.addProgramClasses(classes);
 		builder.setFlags(DexApplicationReadFlags.builder().build());
@@ -114,7 +145,38 @@ public class ApplicationData {
 	 */
 	@Nonnull
 	public static ApplicationData fromDex(@Nonnull byte[] dexFile) throws IOException {
-		InternalOptions options = new Options().getInternalOptions();
+		return fromDex(dexFile, new Options().setLenient(true));
+	}
+
+	/**
+	 * @param dexFile
+	 * 		DEX file content to read.
+	 * @param options
+	 * 		Simplified input options.
+	 *
+	 * @return Application data of the content.
+	 *
+	 * @throws IOException
+	 * 		When content could not be read from the inputs.
+	 */
+	@Nonnull
+	public static ApplicationData fromDex(@Nonnull byte[] dexFile, @Nonnull Options options) throws IOException {
+		return fromDex(dexFile, options.getInternalOptions());
+	}
+
+	/**
+	 * @param dexFile
+	 * 		DEX file content to read.
+	 * @param options
+	 * 		Internal R8 options.
+	 *
+	 * @return Application data of the content.
+	 *
+	 * @throws IOException
+	 * 		When content could not be read from the inputs.
+	 */
+	@Nonnull
+	public static ApplicationData fromDex(@Nonnull byte[] dexFile, @Nonnull InternalOptions options) throws IOException {
 		Inputs inputs = new Inputs().addDex(dexFile);
 		return from(inputs, options);
 	}
@@ -130,7 +192,38 @@ public class ApplicationData {
 	 */
 	@Nonnull
 	public static ApplicationData fromClass(@Nonnull byte[] classFile) throws IOException {
-		InternalOptions options = new Options().getInternalOptions();
+		return fromClass(classFile, new Options().setLenient(true));
+	}
+
+	/**
+	 * @param classFile
+	 * 		Bytecode of class to read.
+	 * @param options
+	 * 		Simplified input options.
+	 *
+	 * @return Application data of the content.
+	 *
+	 * @throws IOException
+	 * 		When content could not be read from the inputs.
+	 */
+	@Nonnull
+	public static ApplicationData fromClass(@Nonnull byte[] classFile, @Nonnull Options options) throws IOException {
+		return fromClass(classFile, options.getInternalOptions());
+	}
+
+	/**
+	 * @param classFile
+	 * 		Bytecode of class to read.
+	 * @param options
+	 * 		Internal R8 options.
+	 *
+	 * @return Application data of the content.
+	 *
+	 * @throws IOException
+	 * 		When content could not be read from the inputs.
+	 */
+	@Nonnull
+	public static ApplicationData fromClass(@Nonnull byte[] classFile, @Nonnull InternalOptions options) throws IOException {
 		Inputs inputs = new Inputs().addJvmClass(classFile);
 		return from(inputs, options);
 	}
@@ -146,7 +239,38 @@ public class ApplicationData {
 	 */
 	@Nonnull
 	public static ApplicationData fromClasses(@Nonnull Collection<byte[]> classFiles) throws IOException {
-		InternalOptions options = new Options().setLenient(true).getInternalOptions();
+		return fromClasses(classFiles, new Options().setLenient(true));
+	}
+
+	/**
+	 * @param classFiles
+	 * 		Collection of classes to read.
+	 * @param options
+	 * 		Simplified input options.
+	 *
+	 * @return Application data of the content.
+	 *
+	 * @throws IOException
+	 * 		When content could not be read from the inputs.
+	 */
+	@Nonnull
+	public static ApplicationData fromClasses(@Nonnull Collection<byte[]> classFiles, @Nonnull Options options) throws IOException {
+		return fromClasses(classFiles, options.getInternalOptions());
+	}
+
+	/**
+	 * @param classFiles
+	 * 		Collection of classes to read.
+	 * @param options
+	 * 		Internal R8 options.
+	 *
+	 * @return Application data of the content.
+	 *
+	 * @throws IOException
+	 * 		When content could not be read from the inputs.
+	 */
+	@Nonnull
+	public static ApplicationData fromClasses(@Nonnull Collection<byte[]> classFiles, @Nonnull InternalOptions options) throws IOException {
 		Inputs inputs = new Inputs().addJvmClasses(classFiles);
 		return from(inputs, options);
 	}
