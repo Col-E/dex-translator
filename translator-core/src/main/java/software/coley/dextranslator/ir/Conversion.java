@@ -12,7 +12,6 @@ import com.android.tools.r8.ir.code.IRCode;
 import com.android.tools.r8.ir.conversion.CfBuilder;
 import com.android.tools.r8.ir.conversion.PrimaryD8L8IRConverter;
 import com.android.tools.r8.ir.desugar.desugaredlibrary.DesugaredLibraryAmender;
-import com.android.tools.r8.ir.optimize.CodeRewriter;
 import com.android.tools.r8.ir.optimize.DeadCodeRemover;
 import com.android.tools.r8.jar.CfApplicationWriter;
 import com.android.tools.r8.origin.Origin;
@@ -102,7 +101,7 @@ public class Conversion {
 						DexCode dexCode = (DexCode) code;
 
 						// Dex --> Java
-						IRCode irCode = IRCodeHacking.buildIR(dexCode, programMethod, applicationView, Origin.root());
+						IRCode irCode = dexCode.buildIR(programMethod, applicationView, Origin.root());
 
 						// Build CF model.
 						CfBuilder builder = new CfBuilder(applicationView, programMethod, irCode, EMPTY_METADATA);
