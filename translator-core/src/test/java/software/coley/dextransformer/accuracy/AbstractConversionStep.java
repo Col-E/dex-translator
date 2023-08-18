@@ -55,12 +55,10 @@ public abstract class AbstractConversionStep {
 		for (DexProgramClass cls : classes) {
 			StringBuilder sb = new StringBuilder();
 			sb.append(cls.getTypeName()).append('\n').append("==========================================");
-			for (DexEncodedMethod method : cls.methods()) {
-				if (method.hasCode()) {
-					Code code = method.getCode();
-					sb.append(code.toString(method, RetracerForCodePrinting.empty()));
-					sb.append("==========================================");
-				}
+			for (DexEncodedMethod method : cls.methods(DexEncodedMethod::hasCode)) {
+				Code code = method.getCode();
+				sb.append(code.toString(method, RetracerForCodePrinting.empty()));
+				sb.append("==========================================");
 			}
 
 			map.put(cls.getTypeName(), sb.toString());
@@ -91,6 +89,14 @@ public abstract class AbstractConversionStep {
 	 */
 	@Nonnull
 	public abstract ApplicationData getApplicationModel() throws IOException;
+
+	/**
+	 * @return Initial step in the chain.
+	 */
+	@Nonnull
+	public AbstractConversionStep initial() {
+		return previous != null ? previous.initial() : this;
+	}
 
 	/**
 	 * @return Previous step.

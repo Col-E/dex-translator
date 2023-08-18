@@ -2,6 +2,7 @@ import java.nio.file.Files
 
 plugins {
     id 'java-library'
+    id 'java-test-fixtures'
     id 'maven-publish'
     id "com.peterabeles.gversion" version "1.10"
 }

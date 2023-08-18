@@ -9,8 +9,11 @@ import com.github.difflib.text.DiffRowGenerator;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.objectweb.asm.Opcodes;
+import sample.UnusedCatchEx1Block;
 import software.coley.dextransformer.TestBase;
 import software.coley.dextranslator.Inputs;
 import software.coley.dextranslator.Options;
@@ -20,14 +23,25 @@ import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.SortedMap;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
 @Disabled
-public class AccuracyTests extends TestBase {
-	private static final int MAX_ITER = 10;
+public class AccuracyTests extends TestBase implements Opcodes {
+	private static final int MAX_ITER = 5;
 	private static final int DIFF_COLUMN_WIDTH = 80;
+	private static final boolean ALWAYS_LOG = false;
+
+	@Test
+	void testSingle() {
+		Class<?> c = UnusedCatchEx1Block.class;
+
+		Map<String, byte[]> classMap = Map.of(c.getName().replace('.', '/'), filterDebug(getRuntimeClassBytes(c)));
+		AbstractConversionStep step = AbstractConversionStep.initJvmStep(ClassFilter.PASS_ALL, classMap);
+		iterate(step);
+	}
 
 	@ParameterizedTest
 	@MethodSource("findDexResources")
@@ -36,31 +50,27 @@ public class AccuracyTests extends TestBase {
 			return;
 
 		// Load inputs
-		ApplicationData initialData;
-		try {
-			Inputs inputs = new Inputs().addDex(inputPath);
-			Options options = new Options()
-					.enableLoadStoreOptimization()
-					.setApiLevel(AndroidApiLevel.getAndroidApiLevel(30));
-			initialData = ApplicationData.from(inputs, options.getInternalOptions());
-		} catch (Exception ex) {
-			fail(ex);
-			return;
-		}
+		ApplicationData initialData = initialDex(inputPath);
 
 		// Begin conversion iterations
 		AbstractConversionStep step = AbstractConversionStep.initDexStep(ClassFilter.PASS_ALL, initialData);
+		iterate(step);
+	}
+
+	private void iterate(@Nonnull AbstractConversionStep step) {
 		while (step.getIndex() < MAX_ITER) {
 			try {
 				step = step.next();
+				if (ALWAYS_LOG)
+					dumpDiffFromPrior(step);
 			} catch (Exception ex) {
-				analyzeFailure(step);
+				dumpDiffFromPrior(step);
 				fail("Failed at step " + step.getIndex(), ex);
 			}
 		}
 	}
 
-	private void analyzeFailure(@Nonnull AbstractConversionStep step) {
+	private static void dumpDiffFromPrior(@Nonnull AbstractConversionStep step) {
 		try {
 			int index = step.getIndex();
 			if (index >= 2) {
@@ -105,6 +115,20 @@ public class AccuracyTests extends TestBase {
 			}
 		} catch (IOException ex) {
 			fail("Failed to disassemble", ex);
+		}
+	}
+
+	@Nonnull
+	private static ApplicationData initialDex(@Nonnull Path inputPath) {
+		try {
+			Inputs inputs = new Inputs().addDex(inputPath);
+			Options options = new Options()
+					.enableLoadStoreOptimization()
+					.setApiLevel(AndroidApiLevel.getAndroidApiLevel(30));
+			return ApplicationData.from(inputs, options.getInternalOptions());
+		} catch (Exception ex) {
+			fail(ex);
+			throw new IllegalStateException();
 		}
 	}
 }

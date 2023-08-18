@@ -2,6 +2,8 @@ package software.coley.dextransformer;
 
 import com.android.tools.r8.D8;
 import org.junit.jupiter.params.provider.Arguments;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -22,6 +24,29 @@ public class TestBase {
 		// Others like 'IRBuilder#addInvokeRegisters' are really stupid.
 		// Any dex --> jar processing fails because it asserts the direction can only be jar --> dex.
 		D8.class.getClassLoader().setDefaultAssertionStatus(false);
+	}
+
+	@Nonnull
+	public static byte[] filterDebug(@Nonnull byte[] classBytes) {
+		ClassWriter writer = new ClassWriter(0);
+		ClassReader reader = new ClassReader(classBytes);
+		reader.accept(writer, ClassReader.SKIP_DEBUG);
+		return writer.toByteArray();
+	}
+
+	/**
+	 * @param cls
+	 * 		Class to load.
+	 *
+	 * @return Bytes of class.
+	 */
+	@Nonnull
+	public static byte[] getRuntimeClassBytes(@Nonnull Class<?> cls) {
+		try {
+			return ClassLoader.getSystemResourceAsStream(cls.getName().replace('.', '/') + ".class").readAllBytes();
+		} catch (IOException ex) {
+			throw new IllegalArgumentException(ex);
+		}
 	}
 
 	/**
