@@ -2,7 +2,7 @@ package sample;
 
 import java.io.IOException;
 
-public class UnusedCatchEx2Block {
+public class UsedCatchEx2Block {
 	public static void foo(int i) {
 		try {
 			if (i > 1)
@@ -10,9 +10,9 @@ public class UnusedCatchEx2Block {
 			if (i > 0)
 				throw new IOException();
 		} catch (UnsupportedOperationException e) {
-			System.out.println("fail 1");
+			System.out.println("fail 1" + e.getMessage());
 		} catch (IOException e) {
-			System.out.println("fail 2");
+			System.out.println("fail 2" + e.getMessage());
 		}
 	}
 }

@@ -9,11 +9,11 @@ import com.github.difflib.text.DiffRowGenerator;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.objectweb.asm.Opcodes;
-import sample.UnusedCatchEx1Block;
+import sample.*;
 import software.coley.dextransformer.TestBase;
 import software.coley.dextranslator.Inputs;
 import software.coley.dextranslator.Options;
@@ -34,10 +34,34 @@ public class AccuracyTests extends TestBase implements Opcodes {
 	private static final int DIFF_COLUMN_WIDTH = 80;
 	private static final boolean ALWAYS_LOG = false;
 
-	@Test
-	void testSingle() {
-		Class<?> c = UnusedCatchEx1Block.class;
-
+	@ParameterizedTest
+	@ValueSource(classes = {
+			EmptyCatchBlock.class,
+			MultiCatchInUnusedCatch.class,
+			MultiCatchInUsedCatch.class,
+			MultiCatchInCatchInCatch.class,
+			RethrownCatchEx1Block.class,
+			RethrownCatchEx2Block.class,
+			RethrownTryInUnusedTry.class,
+			RethrownTryInUnusedTryOfSameType.class,
+			RethrownTryInUsedTryOfSameType.class,
+			UnusedCatchEx.class,
+			UnusedCatchEx1Block.class,
+			UnusedCatchEx2Block.class,
+			UnusedCatchEx3Block.class,
+			UnusedMultiCatch.class,
+			UnusedTryInUnusedTry.class,
+			UnusedTryInUsedTry.class,
+			UsedCatchEx1Block.class,
+			UsedCatchEx2Block.class,
+			UsedCatchEx3Block.class,
+			UsedMultiCatchBoth.class,
+			UsedMultiCatchFirst.class,
+			UsedMultiCatchSecond.class,
+			UsedTryInUnusedTry.class,
+			UsedTryInUsedTry.class,
+	})
+	void testSingle(Class<?> c) {
 		Map<String, byte[]> classMap = Map.of(c.getName().replace('.', '/'), filterDebug(getRuntimeClassBytes(c)));
 		AbstractConversionStep step = AbstractConversionStep.initJvmStep(ClassFilter.PASS_ALL, classMap);
 		iterate(step);
@@ -111,6 +135,11 @@ public class AccuracyTests extends TestBase implements Opcodes {
 								break;
 						}
 					}
+				}
+			} else {
+				SortedMap<String, String> disassembledCurrent = step.disassemble();
+				for (String disassemble : disassembledCurrent.values()) {
+					System.out.println("\n\n\n" + disassemble);
 				}
 			}
 		} catch (IOException ex) {
