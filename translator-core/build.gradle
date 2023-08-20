@@ -2,7 +2,6 @@ import java.nio.file.Files
 
 plugins {
     id 'java-library'
-    id 'java-test-fixtures'
     id 'maven-publish'
     id "com.peterabeles.gversion" version "1.10"
 }
@@ -54,6 +53,13 @@ sourceSets {
     main {
         java {
             srcDirs 'src/generated/java', 'src/main/java'
+        }
+    }
+    test {
+        // We don't use 'java-test-fixtures' because it breaks the publish task.
+        // I swear to god this build system blows.
+        java {
+            srcDirs 'src/testFixtures/java', 'src/test/java'
         }
     }
 }
