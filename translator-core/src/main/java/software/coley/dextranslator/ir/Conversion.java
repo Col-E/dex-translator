@@ -2,7 +2,6 @@ package software.coley.dextranslator.ir;
 
 import com.android.tools.r8.ClassFileConsumer;
 import com.android.tools.r8.cf.CfVersion;
-import com.android.tools.r8.cf.code.CfLabel;
 import com.android.tools.r8.dex.ApplicationWriter;
 import com.android.tools.r8.dex.Marker;
 import com.android.tools.r8.errors.Unreachable;
@@ -22,14 +21,12 @@ import com.android.tools.r8.utils.InternalOptions;
 import com.android.tools.r8.utils.Timing;
 import it.unimi.dsi.fastutil.ints.Int2ReferenceArrayMap;
 import software.coley.dextranslator.model.ApplicationData;
-import software.coley.dextranslator.resugar.TryCatchResugaring;
 import software.coley.dextranslator.util.ThreadPools;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.stream.Collectors;
 
 /**
  * Conversion handling between DEX and JVM bytecode.
