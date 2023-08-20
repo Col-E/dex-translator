@@ -107,15 +107,6 @@ public class Conversion {
 						CfBuilder builder = new CfBuilder(applicationView, programMethod, irCode, EMPTY_METADATA);
 						CfCode cfCode = builder.build(deadCodeRemover, EMPTY_TIMING);
 
-						// Extract labels
-						List<CfLabel> labels = cfCode.getInstructions().stream()
-								.filter(i -> i instanceof CfLabel)
-								.map(l -> (CfLabel) l)
-								.collect(Collectors.toList());
-
-						// Apply re-sugaring processors.
-						TryCatchResugaring.mergeTryCatchBlocks(cfCode, labels);
-
 						// Update method.
 						method.setCode(cfCode, EMPTY_ARRAY_MAP);
 					}
