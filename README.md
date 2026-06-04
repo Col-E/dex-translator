@@ -1,5 +1,7 @@
 # Dex Translator
 
+> **Deprecated**: Please refer to [dex-convert](https://github.com/jumanji144/dex) for lighter-weight translation capabilities. This project is no longer being updated as the fork of R8 we maintained is not being updated.
+
 A translation library and command-line-interface tool for converting between JVM and Dalvik bytecode.
 
 ## Command line tool usage
